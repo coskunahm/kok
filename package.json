@@ -1,0 +1,16 @@
+{
+  "name": "kok-oylama-sistemi",
+  "version": "0.1.0",
+  "description": "KÖK Yönetici Çalıştayı: telefonla oylama ve puanlama sistemi (bağımlılık yok)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/smoke.js",
+    "test:ortam": "node tools/test_ortami.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

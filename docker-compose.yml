@@ -1,0 +1,32 @@
+# KÖK Oylama Sistemi: uygulama + HTTPS (Caddy). Kullanım: .env.example'ı .env olarak kopyalayıp doldurun, sonra: docker compose up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      ADMIN_PIN: ${ADMIN_PIN:?ADMIN_PIN .env dosyasında tanımlı olmalı}
+      KAYIT_PIN: ${KAYIT_PIN:?KAYIT_PIN .env dosyasında tanımlı olmalı}
+      BASE_URL: https://${ALAN_ADI:?ALAN_ADI .env dosyasında tanımlı olmalı}
+      TRUST_PROXY: "1"
+    volumes:
+      - kok-veri:/data
+    expose:
+      - "3000"
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      ALAN_ADI: ${ALAN_ADI}
+      TLS_AYARI: ${TLS_AYARI:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-veri:/data
+      - caddy-ayar:/config
+volumes:
+  kok-veri:
+  caddy-veri:
+  caddy-ayar:

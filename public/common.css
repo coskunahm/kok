@@ -1,0 +1,74 @@
+/* KÖK Yönetici Çalıştayı: ortak tasarım dili (çalıştay sunumuyla aynı) */
+:root{
+  --navy:#0B1F4A;--card:#0F2A5E;--card2:#133373;--gold:#F2A900;--goldl:#FFD166;
+  --teal:#2EC4A0;--teall:#8CF0D6;--pink:#FF5C93;--pinkl:#FFB3CC;--blue:#7FB5FF;--bluel:#BBD6FF;
+  --muted:#9FB0D3;--white:#fff;--ac:var(--teal);
+  --serif:Cambria,"Noto Serif","Iowan Old Style",Georgia,"Times New Roman",serif;
+  --sans:Calibri,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:#0B1F4A url(/static/img/bg_main.jpg) center/cover fixed no-repeat;color:var(--white);font-family:var(--sans);
+  font-size:17px;line-height:1.35;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(1100px 560px at 85% -8%,rgba(46,100,200,.38),transparent 62%),linear-gradient(180deg,rgba(11,31,74,.50),rgba(11,31,74,.82))}
+a{color:var(--goldl)}
+h1,h2,h3{font-family:var(--serif);margin:0;font-weight:700}
+.serif{font-family:var(--serif)}
+.eyebrow{font-weight:700;font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+.eyebrow.teal{color:var(--teal)}.eyebrow.pink{color:var(--pink)}.eyebrow.blue{color:var(--blue)}
+.muted{color:var(--muted)}.gold{color:var(--gold)}.goldl{color:var(--goldl)}.teal{color:var(--teal)}.pinkc{color:var(--pink)}
+.card{background:rgba(15,42,94,.78);border:1px solid color-mix(in srgb,var(--ac) 65%,transparent);border-radius:16px;
+  box-shadow:0 0 22px color-mix(in srgb,var(--ac) 18%,transparent);padding:16px}
+.card.flat{box-shadow:none}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid color-mix(in srgb,var(--ac) 70%,transparent);
+  background:rgba(15,42,94,.82);border-radius:99px;padding:6px 14px;font-weight:700;font-size:14px}
+.pill i{width:9px;height:9px;border-radius:50%;background:var(--ac);display:inline-block}
+.row{display:flex;gap:10px;align-items:center}.col{display:flex;flex-direction:column;gap:10px}
+.sp{flex:1}.wrap-f{flex-wrap:wrap}
+.btn{appearance:none;border:0;border-radius:14px;padding:13px 20px;font:700 17px var(--sans);cursor:pointer;color:var(--navy);
+  background:var(--gold);box-shadow:0 4px 14px rgba(242,169,0,.25);transition:transform .08s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.38;cursor:not-allowed;box-shadow:none}
+.btn.teal{background:var(--teal);box-shadow:0 4px 14px rgba(46,196,160,.25)}
+.btn.pink{background:var(--pink);box-shadow:0 4px 14px rgba(255,92,147,.25)}
+.btn.ghost{background:transparent;color:#fff;border:1.5px solid var(--line,rgba(159,176,211,.45));box-shadow:none}
+.btn.sm{padding:7px 12px;font-size:14px;border-radius:10px}
+.btn.xl{padding:17px 24px;font-size:20px;width:100%}
+.bar{height:10px;border-radius:99px;background:rgba(255,255,255,.13);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px;background:var(--ac);transition:width .3s}
+input,select,textarea{font:inherit;color:#fff;background:rgba(8,22,58,.7);border:1.5px solid rgba(159,176,211,.4);border-radius:12px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+select option{background:#0B1F4A;color:#fff}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+label.f input,label.f select{font-weight:400;font-size:17px;color:#fff;letter-spacing:0}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1a2f66;border:1px solid var(--gold);border-radius:12px;padding:10px 16px;z-index:99;font-weight:700;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.err{border-color:var(--pink)}
+.hide{display:none!important}
+table{border-collapse:collapse;width:100%}
+th{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid rgba(159,176,211,.3)}
+td{padding:8px 10px;border-bottom:1px solid rgba(159,176,211,.14);vertical-align:middle}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#46557f}
+.dot.on{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+.badge{display:inline-block;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;border:1px solid currentColor}
+.badge.ok{color:var(--teall)}.badge.warn{color:var(--goldl)}.badge.off{color:var(--muted)}.badge.pk{color:var(--pinkl)}
+/* ---- matris ve çeyrek listeleri ---- */
+.mat svg{width:100%;height:auto;display:block}
+.mat text{font-family:var(--sans)}
+.quad{border-radius:14px;padding:12px 14px;border:1.5px solid var(--qc);background:color-mix(in srgb,var(--qc) 14%,rgba(15,42,94,.75))}
+.quad h3{font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--qcl);font-family:var(--sans);margin-bottom:8px}
+.qi{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-top:1px solid rgba(255,255,255,.08)}
+.qi:first-of-type{border-top:0}
+.qn{font:700 18px var(--serif);min-width:30px}
+.qs{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+
+.dfl{display:block;margin:10px 0}.dfn{display:block;font-weight:700;color:var(--goldl,#ffd166)}.dfh{display:block;font-size:13px;color:var(--muted,#9fb0d3);margin:1px 0 4px}.dfl textarea{min-height:0;resize:vertical}
+.dfe{display:block;font-size:13px;font-style:italic;color:var(--goldl,#ffd166);opacity:.85;margin:0 0 5px}
+
+.dfc{display:block;text-align:right;font-size:12px;color:var(--muted);margin:2px 2px 6px}.dfc.yakin{color:var(--goldl,#ffd166)}.dfc.dolu{color:var(--pinkl,#ff8fb5);font-weight:700}
+
+.qnot{font-size:13px;color:var(--muted);margin:-2px 0 8px;line-height:1.35}.qh{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.12)}
+
+.rolbar{position:sticky;top:0;z-index:30;display:flex;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 0 10px;margin:0 0 6px;background:linear-gradient(180deg,rgba(11,31,74,.98) 78%,rgba(11,31,74,0))}
+.rolbar .rb{flex:1;text-align:center;text-decoration:none;font-weight:700;font-size:14px;padding:10px 8px;border-radius:12px;border:1.5px solid var(--gold);color:var(--goldl,#ffd166);background:rgba(15,42,94,.9)}
+.rolbar .rb.on{background:var(--gold);color:var(--navy,#0b1f45);border-color:var(--gold)}

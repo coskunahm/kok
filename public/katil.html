@@ -1,0 +1,50 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Katıl · KÖK</title><link rel="stylesheet" href="/static/common.css">
+<style>.w{max-width:440px;margin:0 auto;padding:32px 18px}#kod{font:700 40px var(--serif);text-align:center;letter-spacing:.2em;padding:16px;text-transform:uppercase}.ok{width:84px;height:84px;border-radius:50%;background:var(--teal);color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;margin:4px auto 12px;box-shadow:0 0 30px rgba(46,196,160,.45)}</style></head>
+<body><div class="w col" style="gap:16px" id="ana">
+<div class="eyebrow">KÖK · Yönetici Çalıştayı</div>
+<div id="adim1" class="col" style="gap:16px">
+<h1 style="font-size:34px" id="bas">Katılım ID'nizi girin</h1>
+<div class="muted">ID, yaka kartınızda yazan kimliktir. Girdikten sonra masanıza ve temanıza otomatik atanırsınız.</div>
+<input id="kod" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="ID" enterkeyhint="go">
+<button class="btn xl" id="git">Devam</button>
+</div>
+<div id="adim2" class="col hide" style="gap:14px">
+<div class="card" style="--ac:var(--teal);text-align:center"><div class="ok">✓</div><div class="eyebrow teal">Hoş geldiniz</div><h1 id="kisi" style="font-size:30px;margin:6px 0"></h1><div id="poz" class="muted" style="margin:-2px 0 10px"></div>
+<div class="muted">Masanız</div><div id="masa" class="serif goldl" style="font-size:34px;font-weight:700"></div><div id="tema" class="muted" style="margin-top:4px;font-size:18px"></div></div>
+<button class="btn xl" id="devam">Oylamaya geç</button>
+<button class="btn xl hide" id="kolay" style="background:var(--gold);color:var(--navy)">Kolaylaştırıcı paneli</button>
+<button class="btn ghost" id="degis">Bu ben değilim, başka ID gireceğim</button>
+</div>
+<div id="acik" class="card hide" style="--ac:var(--blue)"><div class="eyebrow blue">Listede değil misiniz?</div>
+<div class="muted" style="margin:6px 0 10px">Masanızı seçerek katılabilirsiniz.</div><select id="masaSec"></select><button class="btn ghost" id="katil" style="margin-top:10px;width:100%">Bu masaya katıl</button></div>
+</div>
+<script src="/static/common.js"></script>
+<script>
+let TOKEN = null;
+const kayitli = () => { try { return localStorage.getItem('kokToken'); } catch (e) { return null; } };
+const kaydet = t => { try { localStorage.setItem('kokToken', t); } catch (e) { /* yut */ } };
+const sil = () => { try { localStorage.removeItem('kokToken'); } catch (e) { /* yut */ } };
+const ROL_K = new URLSearchParams(location.search).get('rol') === 'k';
+if (ROL_K) { $('#bas').textContent = 'Kolaylaştırıcı girişi'; $('#devam').textContent = 'Katılımcı ekranına geç'; }
+const t0 = kayitli();
+if (t0) api('/api/p/' + t0 + '/view').then(v => { if (ROL_K) { if (v.ben.kolay && v.ben.masa) location.replace('/masa/' + v.ben.masa + '?t=' + t0); } else location.replace('/p/' + t0); }).catch(() => sil());
+const git = async () => {
+  const id = $('#kod').value.trim(); if (!id) return;
+  try {
+    const r = await api('/api/kod/' + encodeURIComponent(id)); TOKEN = r.token;
+    $('#kisi').textContent = r.etiket || id.toUpperCase(); $('#poz').textContent = r.pozisyon || '';
+    $('#masa').textContent = r.masa ? r.masaAd : 'Henüz atanmadı';
+    $('#tema').textContent = r.masa ? r.temaAd : 'Yönetim ekibi sizi bir masaya atadığında ekranınız otomatik değişecek.';
+    if (ROL_K && !r.kolay) { toast('Bu ID kolaylaştırıcı olarak tanımlı değil. Yönetim ekibine başvurun.', 1); return; }
+    $('#kolay').classList.toggle('hide', !(r.kolay && r.masa)); if (ROL_K && r.kolay && r.masa) { kaydet(TOKEN); location.href = '/masa/' + r.masa + '?t=' + TOKEN; return; }
+    $('#adim1').classList.add('hide'); $('#adim2').classList.remove('hide'); $('#acik').classList.add('hide');
+  } catch (e) { toast(e.message, 1); }
+};
+$('#git').onclick = git; $('#kod').addEventListener('keydown', e => { if (e.key === 'Enter') git(); });
+$('#devam').onclick = () => { kaydet(TOKEN); location.href = '/p/' + TOKEN; };
+$('#kolay').onclick = () => { kaydet(TOKEN); api('/api/p/' + TOKEN + '/view').then(v => { location.href = '/masa/' + v.ben.masa + '?t=' + TOKEN; }); };
+$('#degis').onclick = () => { TOKEN = null; $('#kod').value = ''; $('#adim2').classList.add('hide'); $('#adim1').classList.remove('hide'); $('#kod').focus(); };
+api('/api/masalar-liste').then(r => { if (!r.acik) return; $('#acik').classList.remove('hide'); $('#masaSec').innerHTML = r.masalar.map(m => `<option value="${esc(m.id)}">${esc(m.ad)} · ${esc(m.tema)}</option>`).join(''); });
+$('#katil').onclick = async () => { try { const r = await api('/api/katil', { masa: $('#masaSec').value }); kaydet(r.token); location.href = '/p/' + r.token; } catch (e) { toast(e.message, 1); } };
+</script></body></html>

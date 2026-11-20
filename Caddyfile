@@ -1,0 +1,14 @@
+{$ALAN_ADI} {
+	# Genel internetten erişilen alan adı için Let's Encrypt sertifikası otomatik alınır.
+	# Yalnızca kurum içi ağdaysa .env'de TLS_AYARI="tls internal" yazın (Caddy kendi kök sertifikasını üretir)
+	# ya da kurumun sertifikası için: TLS_AYARI="tls /sertifika/cert.pem /sertifika/key.pem" (ve dosyaları bağlayın).
+	{$TLS_AYARI}
+	encode gzip
+	reverse_proxy app:3000 {
+		# canlı güncelleme (SSE) akışı tamponlanmaz
+		flush_interval -1
+		transport http {
+			read_timeout 0
+		}
+	}
+}
