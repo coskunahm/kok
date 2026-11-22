@@ -956,6 +956,7 @@ function dosya(res, rel) {
   if (!p.startsWith(PUB)) return hata(res, 403, 'yasak');
   fs.readFile(p, (e, d) => {
     if (e) return hata(res, 404, 'bulunamadı');
+    if (path.extname(p) === '.html') d = Buffer.from(d.toString('utf8').replace(/(\/static\/[\w\/.\-]+\.(?:js|css))/g, '$1?v=' + SURUM)); // Cloudflare/tarayıcı önbelleği eski js/css sunmasın: her sürümde adres değişir
     res.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream', 'cache-control': 'no-cache' });
     res.end(d);
   });

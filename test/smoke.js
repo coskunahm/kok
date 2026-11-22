@@ -305,6 +305,9 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   await new Promise(r => setTimeout(r, 5600)); v = (await a('/api/admin/view')).j; t('puan süresi bitince kendiliğinden kapandı', v.sunum.durum === 'kapali');
   await a('/api/admin/ayar', { otoPuan: false, sunumSn: 5 }); await a('/api/admin/sunum', { islem: 'baslat' }); await new Promise(r => setTimeout(r, 5600)); v = (await a('/api/admin/view')).j; t('otomatik açma kapalıyken puanlama açılmaz (elle açılır)', v.sunum.durum === 'sunum');
   await a('/api/admin/ayar', { otoPuan: true, sunumSn: 165, puanSn: 30 });
+  console.log('Önbellek: sayfalardaki js/css adresleri sürüm numarası taşır');
+  r = await fetch(B + '/masa/A'); const html = await r.text(); t('sayfa js/css adresleri ?v= sürümlüdür (CDN eski dosya sunmaz)', /\/static\/common\.js\?v=\d+/.test(html) && /\/static\/masa\.js\?v=\d+/.test(html));
+  r = await fetch(B + '/static/common.js?v=123'); t('sürümlü js adresi yine çalışır', r.status === 200);
   console.log('Ortak geri sayım ve tema tablosu senkronu');
   await a('/api/admin/sifirla', { kapsam: 'hepsi' });
   await a('/api/admin/kurulum', { sablon: 'demo' }); await a('/api/admin/katilimci/toplu', { adet: 3 });
