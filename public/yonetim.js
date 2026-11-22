@@ -24,12 +24,12 @@ function render() {
   if (ak && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ak.tagName) && app.contains(ak) && Date.now() - lastInput < 9000) { clearTimeout(window.__rr); window.__rr = setTimeout(render, 1600); return; }
   const bagli = A.katilimcilar.filter(k => k.bagli).length;
   let h = `<div class="yh"><div><div class="eyebrow">KÖK · Yönetici Çalıştayı</div><h1 class="serif" style="margin-top:6px">Yönetim paneli</h1></div><span class="sp"></span>
-    <span class="pill" style="--ac:var(--teal)"><i></i>${bagli} / ${A.katilimcilar.length} bağlı</span><a class="btn ghost sm" href="/menu" style="text-decoration:none">← Anasayfa</a><button class="btn ghost sm" data-act="cikis">Çıkış</button>${A.sablon === 'demo' ? '<span class="pill" style="--ac:var(--gold)">Demo şablonu</span>' : ''}
+    <span class="pill" style="--ac:var(--teal)"><i></i>${bagli} / ${A.katilimcilar.length} bağlı</span><a class="btn ghost sm" href="/menu" style="text-decoration:none">← Anasayfa</a>${A.sablon === 'demo' ? '<span class="pill" style="--ac:var(--gold)">Demo şablonu</span>' : ''}
     <a class="btn ghost sm" href="/ekran" target="_blank" style="text-decoration:none">Perde ekranı ↗</a></div>
     <div id="pbar" class="pbar">${progBarIc()}</div>
     <div class="tabs">${TABS.map(([k, v]) => `<button class="tab ${tab === k ? 'on' : ''}" data-tab="${k}">${v}</button>`).join('')}</div>`;
   h += ({ genel, demo: demoAkis, hazirlik, program, katilimci, kolay, masalar, sunum, sonuc, ayar }[tab] || genel)();
-  app.innerHTML = h; etiketle();
+  app.innerHTML = h + cikisAlt('act'); etiketle();
 }
 /* ---------------------------------------------------------- program (yalnızca yönetici) */
 const fmtDk = m => String(Math.floor(m / 60)).padStart(2, '0') + '.' + String(Math.floor(m % 60)).padStart(2, '0');

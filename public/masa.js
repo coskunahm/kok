@@ -60,14 +60,14 @@ function render() {
   if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && app.contains(a) && Date.now() - lastInput < 8000) { setTimeout(render, 1500); return; }
   const m = V.masa, L = adimlar(), cur = L.find(x => !x.bitti) || null, ai = ASM.indexOf(V.asama);
   let h = rolBar('mod', TOK, m.id) + zamanBar() + progSerit() + `<div class="mh"><div><div class="eyebrow">KÖK · Moderatör paneli</div><h1 class="serif" style="margin-top:6px">${esc(m.ad)}</h1><div class="goldl serif" style="font-style:italic;font-size:19px;margin-top:4px">${esc(m.temaAd)}</div></div><span class="sp"></span>
-    <span class="pill" style="--ac:var(--teal)"><i></i>${V.bagli} / ${V.katilimci} katılımcı bağlı</span><button class="btn sm ghost cikis" data-a="cikis">Çıkış</button></div>` + serit(L, cur);
+    <span class="pill" style="--ac:var(--teal)"><i></i>${V.bagli} / ${V.katilimci} katılımcı bağlı</span></div>` + serit(L, cur);
   if (!cur) h += sonKart();
   else if (ASM.indexOf(cur.asama) > ai && !devam.has(cur.id)) h += beklemeKart(cur);
   else h += karti(cur, true);
   const acik = L.filter(x => gor.has(x.id) && x !== cur);
   for (const x of acik) h += karti(x, false);
   h += ozetListe(L, cur);
-  app.innerHTML = h; otoBoy();
+  app.innerHTML = h + cikisAlt('a'); otoBoy();
 }
 const ASAMAAD = { guclu: 'Güçlü yan turu', zayif: 'Zayıf yan turu', fikir: 'Fikir geliştirme', sunum: 'Genel kurul', sonuc: 'Sonuç' };
 function serit(L, cur) { // grup grup ilerleme: ✓ tamam · ● şu an · ○ sırada

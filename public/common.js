@@ -2,6 +2,8 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* ekranın en altındaki Çıkış düğmesi (yanlışlıkla dokunulmasın diye içeriğin sonunda; sabit düğmelerin altında kalmaması için boşluklu) */
+function cikisAlt(tip) { return `<div class="cikisalt"><button class="btn sm ghost" data-${tip === 'act' ? 'act' : 'a'}="cikis">Çıkış</button></div>`; }
 /* çıkış: bu telefondaki giriş bilgisi silinir; sunucudaki oy, fikir ve puanlara dokunulmaz (aynı ID ile tekrar girince devam edilir) */
 function cikisYap() {
   if (!confirm('Çıkış yapılsın mı?\n\nTekrar girmek için ID\'nizi yazmanız gerekir. Verdiğiniz oylar ve yazdıklarınız silinmez.')) return;
