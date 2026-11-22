@@ -22,7 +22,7 @@ function zamanBar() {
 function ust(eb, cls) {
   const m = V.masa;
   const rb = V.ben && V.ben.kolay ? rolBar('kat', TOKEN, m && m.id) + '<div class="saltbar">Salt okunur: katılımcıların gördüğü ekranı izliyorsunuz. Oy, fikir ve puan veremezsiniz.</div>' : '';
-  return rb + `<div class="top"><span class="eyebrow ${cls || ''}">${eb}</span><span class="masachip" style="margin-left:auto">${m ? esc(m.ad) : 'Masa yok'}</span></div>` + zamanBar();
+  return rb + `<div class="top"><span class="eyebrow ${cls || ''}">${eb}</span><span class="masachip" style="margin-left:auto">${m ? esc(m.ad) : 'Masa yok'}</span><button class="btn sm ghost cikis" data-a="cikis">Çıkış</button></div>` + zamanBar();
 }
 function ayarlaHtml(h) { if (h !== lastHtml) { lastHtml = h; app.innerHTML = h; if (V && V.ben && V.ben.kolay) app.querySelectorAll('textarea,input').forEach(x => { x.readOnly = true; }); } }
 
@@ -297,6 +297,7 @@ function secimSonuc() {
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-a]'); if (!el) return;
   const a = el.dataset.a;
+  if (a === 'cikis') { cikisYap(); return; }
   if (V && V.ben && V.ben.kolay && a !== 'ftab') { toast('Moderatör bu ekranı yalnızca izler; oy, fikir ve puan veremez.', 1); return; }
   if (a === 'tile' || a === 'eksi') {
     e.stopPropagation();

@@ -69,6 +69,8 @@ td{padding:8px 10px;border-bottom:1px solid rgba(159,176,211,.14);vertical-align
 
 .qnot{font-size:13px;color:var(--muted);margin:-2px 0 8px;line-height:1.35}.qh{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.12)}
 
+
+.cikis{margin-left:8px;min-height:0!important;padding:6px 12px;font-size:13px;white-space:nowrap}
 .rolbar{position:sticky;top:0;z-index:30;display:flex;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 0 10px;margin:0 0 6px;background:linear-gradient(180deg,rgba(11,31,74,.98) 78%,rgba(11,31,74,0))}
 .rolbar .rb{flex:1;text-align:center;text-decoration:none;font-weight:700;font-size:14px;padding:10px 8px;border-radius:12px;border:1.5px solid var(--gold);color:var(--goldl,#ffd166);background:rgba(15,42,94,.9)}
 .rolbar .rb.on{background:var(--gold);color:var(--navy,#0b1f45);border-color:var(--gold)}

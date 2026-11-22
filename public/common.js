@@ -2,6 +2,12 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/* çıkış: bu telefondaki giriş bilgisi silinir; sunucudaki oy, fikir ve puanlara dokunulmaz (aynı ID ile tekrar girince devam edilir) */
+function cikisYap() {
+  if (!confirm('Çıkış yapılsın mı?\n\nTekrar girmek için ID\'nizi yazmanız gerekir. Verdiğiniz oylar ve yazdıklarınız silinmez.')) return;
+  try { localStorage.removeItem('kokToken'); } catch (e) { /* yut */ }
+  location.href = '/';
+}
 /* moderatör için sabit rol çubuğu: Moderatör paneli ↔ Katılımcı görünümü (salt okunur) */
 function rolBar(aktif, tok, masaId) {
   if (!tok || !masaId) return '';
