@@ -39,7 +39,7 @@ Alan adı ve sunucu hazır değilse çalıştay günü için en kolay yol: sunuc
    ```
 4. Tarayıcıdan `https://ALAN_ADI/yonetim` açın, PIN ile girin. QR ve bağlantı adresleri otomatik olarak `https://ALAN_ADI` olarak üretilir (`BASE_URL`). Yönetim › Ayarlar'dan da görebilirsiniz.
 
-Güncelleme (depodan): sunucuda proje klasöründe `./guncelle.sh` çalıştırın (`git pull` ve yeniden derleme). Veri `kok-veri` biriminde durur; güncellemede silinmez. Güncelleme sırasında yaklaşık 20–30 saniye kesinti olur; çalıştay sırasında güncelleme yapmayın.
+Güncelleme: yeni dosyaları kopyalayıp `docker compose up -d --build`. Veri `kok-veri` birimindedir; güncellemede silinmez.
 
 ## 3. Çalıştay gününden önce kontrol listesi
 

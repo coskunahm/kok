@@ -2,18 +2,18 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-/* öneri detay formu (katılımcı ve kolaylaştırıcı ekranları ortak) */
+/* moderatör için sabit rol çubuğu: Moderatör paneli ↔ Katılımcı görünümü (salt okunur) */
+function rolBar(aktif, tok, masaId) {
+  if (!tok || !masaId) return '';
+  return `<div class="rolbar"><a class="rb ${aktif === 'mod' ? 'on' : ''}" href="/masa/${esc(masaId)}?t=${encodeURIComponent(tok)}">Moderatör paneli</a><a class="rb ${aktif === 'kat' ? 'on' : ''}" href="/p/${encodeURIComponent(tok)}?izle=1">Katılımcı görünümü</a></div>`;
+}
+/* öneri detay formu (katılımcı ve moderatör ekranları ortak) */
 function detayForm(f, alanlar, kilit) {
   const sw = `<div class="card flat" style="margin:10px 0;--ac:var(--teal)"><div class="dfn" style="color:var(--teall,#6ee7c8)">Dayandığı SWOT bulguları <span style="font-weight:400;font-size:13px">(fikir girişinden otomatik)</span></div>${(f.swot || []).length ? f.swot.map(x => `<div style="font-size:14px;margin-top:3px">${esc(x)}</div>`).join('') : '<div class="dfh">Seçilmedi</div>'}</div>`;
   return sw + alanlar.map(a => `<label class="dfl"><span class="dfn">${esc(a.ad)}</span><span class="dfh">${esc(a.ipucu)}</span>${a.ornek ? `<span class="dfe">Örnek: ${esc(a.ornek)}</span>` : ''}<textarea data-df="${esc(f.id)}|${a.k}" maxlength="${a.max}" rows="${a.k === 'sunumcu' ? 1 : 3}" ${kilit ? 'disabled' : ''}>${esc((f.alan || {})[a.k] || '')}</textarea><span class="dfc" data-dc="${esc(f.id)}|${a.k}">${((f.alan || {})[a.k] || '').length} / ${a.max}</span></label>`).join('');
 }
 /* öneri detayı: karakter sayacı (sınıra yaklaşınca sarı, dolunca pembe) */
 document.addEventListener('input', e => { const t = e.target; if (!t || !t.matches || !t.matches('textarea[data-df]')) return; const c = document.querySelector('[data-dc="' + t.dataset.df.replace(/"/g, '') + '"]'); if (!c) return; const n = t.value.length, mx = +t.getAttribute('maxlength') || 0; c.textContent = n + ' / ' + mx; c.className = 'dfc' + (n >= mx ? ' dolu' : n >= mx * 0.9 ? ' yakin' : ''); });
-/* kolaylaştırıcı için sabit rol çubuğu: iki ekran arasında tek dokunuşla geçiş (kaydırınca yukarıda kalır) */
-function rolBar(aktif, tok, masaId) {
-  if (!tok || !masaId) return '';
-  return `<div class="rolbar"><a class="rb ${aktif === 'kolay' ? 'on' : ''}" href="/masa/${esc(masaId)}?t=${encodeURIComponent(tok)}">Kolaylaştırıcı ekranı</a><a class="rb ${aktif === 'kat' ? 'on' : ''}" href="/p/${encodeURIComponent(tok)}">Katılımcı ekranı</a></div>`;
-}
 let SKEW = 0;
 const now = () => Date.now() + SKEW;
 function setSkew(t) { if (t) SKEW = t - Date.now(); }
@@ -124,5 +124,5 @@ function ceyrekKart(key, liste, o = {}) {
 }
 function matrisAciklama(mt) { // ◆ notu yalnızca görüş ayrılığı yüksek bir öneri varsa gösterilir
   const ayr = mt && mt.oge && mt.oge.some(o => o.ayrilik);
-  return '<div class="muted" style="font-size:14px">Etki ve uygulanabilirlik ortalamalarıdır.' + (ayr ? ' ◆ puanlar çok farklı (fikir birliği yok).' : '') + ' Yüksek etkili ama zor öneriler elenmez. Bu sonuçlar yönetici önceliğidir; nihai karar değildir.</div>';
+  return '<div class="muted" style="font-size:14px">Etki ve uygulanabilirlik ortalamalarıdır.' + (ayr ? ' ◆ puanlar çok farklı (fikir birliği yok).' : '') + ' Yüksek etkili ama zor öneriler elenmez. Bu sonuçlar katılımcı önceliğidir; nihai karar değildir.</div>';
 }

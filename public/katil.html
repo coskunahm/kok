@@ -13,7 +13,7 @@
 <div class="card" style="--ac:var(--teal);text-align:center"><div class="ok">✓</div><div class="eyebrow teal">Hoş geldiniz</div><h1 id="kisi" style="font-size:30px;margin:6px 0"></h1><div id="poz" class="muted" style="margin:-2px 0 10px"></div>
 <div class="muted">Masanız</div><div id="masa" class="serif goldl" style="font-size:34px;font-weight:700"></div><div id="tema" class="muted" style="margin-top:4px;font-size:18px"></div></div>
 <button class="btn xl" id="devam">Oylamaya geç</button>
-<button class="btn xl hide" id="kolay" style="background:var(--gold);color:var(--navy)">Kolaylaştırıcı paneli</button>
+<button class="btn xl hide" id="kolay" style="background:var(--gold);color:var(--navy)">Moderatör paneli</button>
 <button class="btn ghost" id="degis">Bu ben değilim, başka ID gireceğim</button>
 </div>
 <div id="acik" class="card hide" style="--ac:var(--blue)"><div class="eyebrow blue">Listede değil misiniz?</div>
@@ -26,7 +26,7 @@ const kayitli = () => { try { return localStorage.getItem('kokToken'); } catch (
 const kaydet = t => { try { localStorage.setItem('kokToken', t); } catch (e) { /* yut */ } };
 const sil = () => { try { localStorage.removeItem('kokToken'); } catch (e) { /* yut */ } };
 const ROL_K = new URLSearchParams(location.search).get('rol') === 'k';
-if (ROL_K) { $('#bas').textContent = 'Kolaylaştırıcı girişi'; $('#devam').textContent = 'Katılımcı ekranına geç'; }
+if (ROL_K) { $('#bas').textContent = 'Moderatör girişi'; }
 const t0 = kayitli();
 if (t0) api('/api/p/' + t0 + '/view').then(v => { if (ROL_K) { if (v.ben.kolay && v.ben.masa) location.replace('/masa/' + v.ben.masa + '?t=' + t0); } else location.replace('/p/' + t0); }).catch(() => sil());
 const git = async () => {
@@ -36,7 +36,7 @@ const git = async () => {
     $('#kisi').textContent = r.etiket || id.toUpperCase(); $('#poz').textContent = r.pozisyon || '';
     $('#masa').textContent = r.masa ? r.masaAd : 'Henüz atanmadı';
     $('#tema').textContent = r.masa ? r.temaAd : 'Yönetim ekibi sizi bir masaya atadığında ekranınız otomatik değişecek.';
-    if (ROL_K && !r.kolay) { toast('Bu ID kolaylaştırıcı olarak tanımlı değil. Yönetim ekibine başvurun.', 1); return; }
+    if (ROL_K && !r.kolay) { toast('Bu ID moderatör olarak tanımlı değil. Yönetim ekibine başvurun.', 1); return; }
     $('#kolay').classList.toggle('hide', !(r.kolay && r.masa)); if (ROL_K && r.kolay && r.masa) { kaydet(TOKEN); location.href = '/masa/' + r.masa + '?t=' + TOKEN; return; }
     $('#adim1').classList.add('hide'); $('#adim2').classList.remove('hide'); $('#acik').classList.add('hide');
   } catch (e) { toast(e.message, 1); }

@@ -27,14 +27,14 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   r = await a('/api/masa/3A/tur?k=' + mk, { tur: 'Z', islem: 'ac', postit: 10, oy: 10, maxPer: 1 }, false); t('güçlü bitmeden zayıf açılamaz', r.s === 409);
   r = await a('/api/masa/3A/tur?k=' + mk, { tur: 'G', islem: 'kapat' }, false); t('oylama kapanır', r.s === 200 && r.j.sonuc.G.ilk.length >= 5);
   r = await a('/api/p/' + k1.token + '/oy', { tur: 'G', alloc: { 1: 12 } }, false); t('kapanınca oy verilemez', r.s === 409);
-  console.log('Kolaylaştırıcı (katılımcı olarak)');
+  console.log('Moderatör (katılımcı olarak)');
   const kol = v.katilimcilar.find(k => k.masa === '3A' && k.id !== k1.id), dig = v.masalar.find(m => m.id === '4A').key;
-  r = await a('/api/masa/3A/view?t=' + kol.token, null, false); t('işaretlenmeden kolaylaştırıcı paneli açılmaz', r.s === 401);
-  r = await a('/api/admin/katilimci/' + kol.id, { kolay: true }); t('yönetim kolaylaştırıcı işaretler', r.s === 200);
-  r = await a('/api/masa/3A/view?t=' + kol.token, null, false); t('kolaylaştırıcı kendi masa panelini açar', r.s === 200);
+  r = await a('/api/masa/3A/view?t=' + kol.token, null, false); t('işaretlenmeden moderatör paneli açılmaz', r.s === 401);
+  r = await a('/api/admin/katilimci/' + kol.id, { kolay: true }); t('yönetim moderatör işaretler', r.s === 200);
+  r = await a('/api/masa/3A/view?t=' + kol.token, null, false); t('moderatör kendi masa panelini açar', r.s === 200);
   r = await a('/api/masa/4A/view?t=' + kol.token, null, false); t('başka masanın paneli açılmaz', r.s === 401);
   r = await a('/api/masa/3A/tur?t=' + kol.token, { tur: 'G', islem: 'ayarla', postit: 14 }, false); t('oy girilmiş turda post-it sayısı değiştirilemez', r.s === 409, JSON.stringify(r.j));
-  r = await a('/api/masa/3A/tur?t=' + kol.token, { tur: 'G', islem: 'ayarla', postit: 24 }, false); t('kolaylaştırıcı oylama ayarı yapar (değişmeyen değer kabul edilir)', r.s === 200);
+  r = await a('/api/masa/3A/tur?t=' + kol.token, { tur: 'G', islem: 'ayarla', postit: 24 }, false); t('moderatör oylama ayarı yapar (değişmeyen değer kabul edilir)', r.s === 200);
   r = await a('/api/p/' + kol.token + '/view', null, false); t('aynı kişi katılımcı ekranını da görür (kolay işareti)', r.s === 200 && r.j.ben.kolay === true);
   r = await a('/api/masa/3A/view?t=' + k1.token, null, false); t('sıradan katılımcı panel açamaz', r.s === 401);
   r = await a('/api/kod/' + kol.kod, null, false); t('ID girişi kolay bilgisini verir', r.j.kolay === true);
@@ -51,14 +51,14 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   r = await a('/api/kayit/ekle', { etiket: 'Geç Kişi', masa: '6A' }, false, 'POST', KP); t('kapanınca yeni kişi eklenemez', r.s === 409);
   r = await a('/api/kayit/katilimci/' + ky.id, { geldi: false }, false, 'POST', KP); t('kapanınca geldi işareti yine yapılır', r.s === 200);
   await a('/api/admin/ayar', { kayitKapali: false });
-  r = await a('/api/masa/3A/view?t=' + kol.token, null, false); t('kolaylaştırıcı görünümü çalışır', r.s === 200);
-  console.log('Kolaylaştırıcı ekleme');
-  r = await a('/api/admin/kolaylastirici/ekle', { etiket: 'Yeni Kolay', pozisyon: 'Proje Ekibi', masa: '7B' }); t('kolaylaştırıcı eklenir', r.s === 200 && r.j.kod);
+  r = await a('/api/masa/3A/view?t=' + kol.token, null, false); t('moderatör görünümü çalışır', r.s === 200);
+  console.log('Moderatör ekleme');
+  r = await a('/api/admin/kolaylastirici/ekle', { etiket: 'Yeni Kolay', pozisyon: 'Proje Ekibi', masa: '7B' }); t('moderatör eklenir', r.s === 200 && r.j.kod);
   v = (await a('/api/admin/view')).j; t('listede kolay işaretli görünür', v.katilimcilar.some(k => k.etiket === 'Yeni Kolay' && k.kolay && k.masa === '7B'));
-  r = await a('/api/admin/kolaylastirici/ekle', { etiket: '', masa: '7B' }); t('adsız kolaylaştırıcı reddedilir', r.s === 400);
-  r = await a('/api/admin/kolaylastirici/eksik-olustur', {}); v = (await a('/api/admin/view')).j; t('eksik masalara kolaylaştırıcı oluşturulur', r.s === 200 && v.masalar.every(m => v.katilimcilar.some(k => k.masa === m.id && k.kolay)));
+  r = await a('/api/admin/kolaylastirici/ekle', { etiket: '', masa: '7B' }); t('adsız moderatör reddedilir', r.s === 400);
+  r = await a('/api/admin/kolaylastirici/eksik-olustur', {}); v = (await a('/api/admin/view')).j; t('eksik masalara moderatör oluşturulur', r.s === 200 && v.masalar.every(m => v.katilimcilar.some(k => k.masa === m.id && k.kolay)));
   console.log('Oy hakkı otomatik');
-  r = await a('/api/masa/5B/tur?k=' + v.masalar.find(m => m.id === '5B').key, { tur: 'G', islem: 'ayarla', postit: 24, oy: 99, maxPer: 9 }, false); t('kolaylaştırıcı post-it girer', r.s === 200);
+  r = await a('/api/masa/5B/tur?k=' + v.masalar.find(m => m.id === '5B').key, { tur: 'G', islem: 'ayarla', postit: 24, oy: 99, maxPer: 9 }, false); t('moderatör post-it girer', r.s === 200);
   v = (await a('/api/admin/view')).j; let o5 = v.masalar.find(m => m.id === '5B').tur.G; t('oy hakkı post-it/2, en fazla 2 otomatik', o5.oy === 12 && o5.maxPer === 2);
   r = await a('/api/masa/5B/tur?k=' + v.masalar.find(m => m.id === '5B').key, { tur: 'G', islem: 'ayarla', postit: 40 }, false); v = (await a('/api/admin/view')).j; o5 = v.masalar.find(m => m.id === '5B').tur.G; t('oy hakkı en çok 15', o5.oy === 15);
   await a('/api/admin/masa/5B', { tur: 'G', islem: 'ayarla', postit: 40, oy: 20, maxPer: 2 }); v = (await a('/api/admin/view')).j; o5 = v.masalar.find(m => m.id === '5B').tur.G; t('yönetim özel oy hakkı verebilir', o5.oy === 20 && o5.ozel === true);
@@ -75,7 +75,7 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   await oyVer(ts[0].token, { 1: 2, 2: 2, 8: 1 }); await oyVer(ts[1].token, { 1: 2, 4: 2, 5: 1 }); await oyVer(ts[2].token, { 6: 2, 7: 2, 8: 1 });
   v = (await a('/api/admin/view')).j; const eksikKisi = v.katilimcilar.find(k => k.masa === '2A' && !ts.some(q => q.id === k.id));
   t('yönetim kimin oy kullandığını görür', ts.every(k => v.katilimcilar.find(q => q.id === k.id).oy.G) && eksikKisi.oy.G === false && eksikKisi.oy.Z === false);
-  const mv2 = (await a('/api/masa/2A/view?k=' + k2, null, false)).j; t('kolaylaştırıcı masadakilerin oy durumunu görür (kod/cihaz yok)', mv2.kisiler.filter(k => k.oy.G).length === 3 && !('kod' in mv2.kisiler[0]) && !('cihaz' in mv2.kisiler[0]));
+  const mv2 = (await a('/api/masa/2A/view?k=' + k2, null, false)).j; t('moderatör masadakilerin oy durumunu görür (kod/cihaz yok)', mv2.kisiler.filter(k => k.oy.G).length === 3 && !('kod' in mv2.kisiler[0]) && !('cihaz' in mv2.kisiler[0]));
   r = await a('/api/masa/2A/tur?k=' + k2, { tur: 'G', islem: 'seans-kapat' }, false); t('oylama kapanmadan seans kapatılamaz', r.s === 409);
   await a('/api/masa/2A/tur?k=' + k2, { tur: 'G', islem: 'kapat' }, false);
   r = await a('/api/masa/2A/tur?k=' + k2, { tur: 'G', islem: 'seans-kapat', metinler: { 1: 'A', 2: 'B', 4: 'C', 6: 'D', 7: 'E', 8: 'F' } }, false); t('eşitlikte seçim yapılmadan kapanmaz', r.s === 409 && /Eşitlik/.test(r.j.hata || r.j.error || JSON.stringify(r.j)));
@@ -86,7 +86,7 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   const csvB = await (await fetch(B + '/api/admin/export/bulgular.csv', { headers: { 'x-pin': PIN } })).text(); t('bulgular CSV içeriği taşır', csvB.includes('kapandı') && csvB.includes(';E;'));
   r = await a('/api/masa/2A/tur?k=' + k2, { tur: 'G', islem: 'seans-ac' }, false); t('seans yeniden açılır', r.s === 200 && r.j.tur.G.seansKapali === false);
   r = await a('/api/masa/2A/tur?k=' + k2, { tur: 'G', islem: 'seans-ac' }, false);
-  // tema tablosu yalnızca kolaylaştırıcının kaydettiği son hali gösterir
+  // tema tablosu yalnızca moderatörün kaydettiği son hali gösterir
   r = await fetch(B + '/api/tema/2'); let tt = await r.json(); t('seans kapanmadan tema tablosunda bulgu yok', tt.masalar.every(mm => mm.G === null));
   await a('/api/masa/2A/tur?k=' + k2, { tur: 'G', islem: 'seans-kapat', secim: [2, 4, 6, 7], metinler: { 1: 'A', 2: 'B', 4: 'C', 6: 'D', 7: 'E' } }, false);
   r = await fetch(B + '/api/tema/2'); tt = await r.json(); t('seans kapanınca tema tablosunda son hal görünür', tt.masalar.find(mm => mm.id === '2A').G.length === 5 && tt.masalar.find(mm => mm.id === '2A').G[0].etiket === 'A');
@@ -102,7 +102,7 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   r = await a('/api/admin/simule', { tur: 'bulgu-temizle', masa: '1B', turKodu: 'GZ' }); v = (await a('/api/admin/view')).j; d1 = v.masalar.find(m => m.id === '1B');
   t('demo verisi temizlenir', d1.tur.G.durum === 'hazir' && d1.tur.G.postit === 0 && d1.tur.Z.durum === 'hazir');
   { const mv3 = (await a('/api/masa/1A/view?k=' + (await a('/api/admin/view')).j.masalar.find(x => x.id === '1A').key, null, false)).j;
-    t('kolaylaştırıcı program saatlerini görür (not yok)', Array.isArray(mv3.program) && mv3.program.some(x => /brainwriting/.test(x.ad) && x.e - x.b === 22) && mv3.program.every(x => !('not' in x))); }
+    t('moderatör program saatlerini görür (not yok)', Array.isArray(mv3.program) && mv3.program.some(x => /brainwriting/.test(x.ad) && x.e - x.b === 22) && mv3.program.every(x => !('not' in x))); }
   console.log('Demo fikir aşaması');
   await a('/api/admin/simule', { tur: 'bulgu-demo', masa: '2A', turKodu: 'GZ', seviye: 'tam' }); await a('/api/admin/simule', { tur: 'bulgu-demo', masa: '2B', turKodu: 'GZ', seviye: 'tam' });
   { const tt = await (await fetch(B + '/api/tema/2')).json(), kodlar = []; for (const mm of tt.masalar) for (const x of (mm.G || [])) kodlar.push(mm.id + 'G-' + x.no); for (const mm of tt.masalar) for (const x of (mm.Z || [])) kodlar.push(mm.id + 'Z-' + x.no);
@@ -121,7 +121,7 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
     t('demo fikir adımı ' + adim + ' → ' + durum, r.s === 200 && v.secimler['2B'].durum === durum);
   }
   r = await a('/api/admin/simule', { tur: 'fikir-demo', masa: '2B', adim: 'hazir' }); v = (await a('/api/admin/view')).j;
-  t('demo: masadaki herkes için bir fikir ("Fikir 2B-N")', v.secimler['2B'].fikir === v.katilimcilar.filter(k => k.masa === '2B').length && v.secimler['2B'].fikir >= 8);
+  t('demo: masadaki herkes için bir fikir ("Fikir 2B-N")', v.secimler['2B'].fikir === v.katilimcilar.filter(k => k.masa === '2B' && !k.kolay).length && v.secimler['2B'].fikir >= 8);
   r = await a('/api/admin/simule', { tur: 'fikir-demo', masa: '2B', adim: 'onay' }); v = (await a('/api/admin/view')).j;
   const dtk = v.katilimcilar.filter(k => k.masa === '2B' && !k.kolay), dkb = v.masalar.find(x => x.id === '2B').key, df1 = v.fikirler.find(f => f.masa === '2B' && f.sira === 1), df2 = v.fikirler.find(f => f.masa === '2B' && f.sira === 2);
   r = await a('/api/p/' + dtk[0].token + '/detay', { islem: 'kaydet', fikirId: df1.id, alan: { uygulama: 'x' } }, false); t('takıma katılmadan detay yazılamaz', r.s === 409);
@@ -136,13 +136,13 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   r = await a('/api/p/' + dtk[0].token + '/detay', { islem: 'birak', fikirId: df1.id }, false); t('yazar yazmayı bırakabilir', r.s === 200);
   r = await a('/api/p/' + dtk[1].token + '/detay', { islem: 'katil', fikirId: df1.id }, false); t('bırakılınca başkası devralır', r.s === 200);
   r = await a('/api/p/' + dtk[0].token + '/detay', { islem: 'kaydet', fikirId: df1.id, alan: { uygulama: 'eski yazar' } }, false); t('bırakan kişi artık yazamaz', r.s === 409);
-  r = await a('/api/masa/2B/detay?k=' + dkb, { islem: 'birak', fikirId: df1.id }, false); t('kolaylaştırıcı yazarı serbest bırakabilir', r.s === 200 && r.j.detay.find(f => f.id === df1.id).takim.length === 0);
+  r = await a('/api/masa/2B/detay?k=' + dkb, { islem: 'birak', fikirId: df1.id }, false); t('moderatör yazarı serbest bırakabilir', r.s === 200 && r.j.detay.find(f => f.id === df1.id).takim.length === 0);
   await a('/api/p/' + dtk[0].token + '/detay', { islem: 'katil', fikirId: df1.id }, false);
   { await a('/api/masa/2B/detay?k=' + dkb, { islem: 'birak', fikirId: df2.id }, false); const yr = await Promise.all(dtk.slice(2, 8).map(k => a('/api/p/' + k.token + '/detay', { islem: 'katil', fikirId: df2.id }, false))); t('6 kişi aynı anda yazar olmak isterse yalnızca biri başarılı olur', yr.filter(x => x.s === 200).length === 1, yr.map(x => x.s).join(',')); }
   r = await a('/api/p/' + dtk[0].token + '/detay', { islem: 'gonder', fikirId: df1.id }, false); t('detay gönderilir', r.s === 200);
   r = await a('/api/p/' + dtk[0].token + '/detay', { islem: 'kaydet', fikirId: df1.id, alan: { uygulama: 'değişti' } }, false); t('gönderilen detay düzenlemeye açılmadan değişmez', r.s === 409);
-  r = await a('/api/masa/2B/detay?k=' + dkb, { islem: 'ac', fikirId: df1.id }, false); t('kolaylaştırıcı düzenlemeye açabilir', r.s === 200 && r.j.detay.find(f => f.id === df1.id).gonder === false);
-  r = await a('/api/masa/2B/detay?k=' + dkb, { islem: 'kaydet', fikirId: df2.id, alan: { uygulama: 'Kolaylaştırıcı yazdı', kapsam: 'Pilot ekipler' } }, false); t('kolaylaştırıcı her öneriyi doldurabilir', r.s === 200);
+  r = await a('/api/masa/2B/detay?k=' + dkb, { islem: 'ac', fikirId: df1.id }, false); t('moderatör düzenlemeye açabilir', r.s === 200 && r.j.detay.find(f => f.id === df1.id).gonder === false);
+  r = await a('/api/masa/2B/detay?k=' + dkb, { islem: 'kaydet', fikirId: df2.id, alan: { uygulama: 'Moderatör yazdı', kapsam: 'Pilot ekipler' } }, false); t('moderatör her öneriyi doldurabilir', r.s === 200);
   v = (await a('/api/admin/view')).j; t('yönetim gönderim durumunu görür', v.detayDurum['2B'].toplam === 2 && v.detayDurum['2B'].gonderilen === 0);
   v = (await a('/api/admin/view')).j; t('demo: masanın önerisi kaydedildi, fikir adı "Fikir 2B-N" biçiminde', v.fikirler.filter(f => f.masa === '2B').length === 2 && /^Fikir 2B-\d+$/.test(v.fikirler.find(f => f.masa === '2B').ad));
   r = await a('/api/admin/simule', { tur: 'fikir-demo', masa: '2B', adim: 'giris' }); v = (await a('/api/admin/view')).j; t('demo fikir aşaması başa alınır', v.secimler['2B'].durum === 'hazir' && v.fikirler.filter(f => f.masa === '2B').length === 0);
@@ -227,6 +227,84 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   for (const [k, f] of [[eY, 'Z'], [eZ, 'Y'], [e1, 'Y'], [e2, 'Y'], [eX, 'Y']]) await a('/api/p/' + k.token + '/dar-oy', { tur: 'F', nos: [FI[f]] }, false);
   r = await a('/api/masa/A/secim?k=' + keyE, { islem: 'dar-kapat' }, false); const ds2 = r.j.secim.dar; t('dar oylama net kazananı belirler (kura yok)', !ds2.kuraGerek && ds2.secilen.length === 2 && ds2.secilen.includes(FI.Y) && ds2.secilen.includes(FI.X));
   r = await a('/api/masa/A/secim?k=' + keyE, { islem: 'onayla', secilen: ds2.secilen }, false); t('dar oylama sonucu masanın önerisi olarak kaydedilir', r.s === 200);
+  console.log('Katılımcı listesi aktarımı (ID;masa;ad;pozisyon;k)');
+  await a('/api/admin/sifirla', { kapsam: 'hepsi' }); await a('/api/admin/kurulum', { sablon: 'demo' });
+  r = await a('/api/admin/katilimci/id-aktar', { metin: '41001;A;Ayşe Demir;Bölge Müdürü\n41002;A;Mehmet Kaya;Moderatör;k\n41003;B;Fatma Yıldız;Daire Başkanı\n41004;Z9;Yanlış Masa;Müdür\n12;A;Kısa ID;X' });
+  t('liste aktarımı: 4 kişi eklenir, hatalı satırlar uyarı verir', r.j.eklenen === 4 && r.j.uyari.length === 2);
+  r = await fetch(B + '/api/kod/41002'); r = await r.json(); t('aktarılan moderatör ID ile girer (moderatör, masa, ad)', r.kolay === true && r.masa === 'A' && r.etiket === 'Mehmet Kaya');
+  r = await fetch(B + '/api/kod/41001'); r = await r.json(); t('aktarılan katılımcı: moderatör değil, pozisyon yazılı', r.kolay === false && r.pozisyon === 'Bölge Müdürü');
+  r = await a('/api/admin/katilimci/id-aktar', { metin: '41001;B;Ayşe Demir;Bölge Müdürü' }); v = (await a('/api/admin/view')).j;
+  t('aynı ID tekrar yüklenince çoğalmaz, masası güncellenir', r.j.guncellenen === 1 && v.katilimcilar.filter(k => k.kod === '41001').length === 1 && v.katilimcilar.find(k => k.kod === '41001').masa === 'B');
+  console.log('Yönetici demo akışı: içerik sıfırlama ve yedek adımlar');
+  await a('/api/admin/sifirla', { kapsam: 'hepsi' }); await a('/api/admin/kurulum', { sablon: 'demo' });
+  await a('/api/admin/katilimci/id-aktar', { metin: '51001;A;Ali Veli;Müdür\n51002;A;Kol A;Moderatör;k\n51003;A;Ayşe Fatma;Müdür\n51004;B;Can Can;Müdür\n51005;B;Kol B;Moderatör;k\n51006;B;Deniz Su;Müdür' });
+  await a('/api/admin/simule', { tur: 'demo-hiz', ac: true }); v = (await a('/api/admin/view')).j; t('demo hızı: sunum 12 sn, puan 10 sn', v.demoHiz === true && v.ayar.sunumSn === 12 && v.ayar.puanSn === 10);
+  await a('/api/admin/asama', { asama: 'guclu' }); await a('/api/admin/simule', { tur: 'swot', turKodu: 'G' }); await a('/api/admin/simule', { tur: 'oy', kolayAtla: true });
+  v = (await a('/api/admin/view')).j; t('demo oyları moderatörler hariç üretilir', v.katilimcilar.filter(k => k.kolay).every(k => !k.oy.G) && v.katilimcilar.filter(k => !k.kolay).every(k => k.oy.G));
+  await a('/api/admin/simule', { tur: 'swot-bitir', turKodu: 'G' }); v = (await a('/api/admin/view')).j; t('yedek adım: kalan masalarda seans otomatik kapanır', v.masalar.every(x => x.tur.G.seansKapali));
+  await a('/api/admin/simule', { tur: 'demo-bitir' }); v = (await a('/api/admin/view')).j;
+  t('temizlik: katılımcılar ve ID\'ler kalır, süreç sıfırlanır, süreler geri gelir', v.katilimcilar.length === 6 && v.asama === 'hazirlik' && !v.demoHiz && v.ayar.sunumSn === 165 && v.masalar.every(x => x.tur.G.durum === 'hazir' && !x.tur.G.seansKapali));
+  r = await fetch(B + '/api/kod/51002'); r = await r.json(); t('temizlikten sonra ID ile giriş sürer', r.kolay === true && r.masa === 'A');
+  console.log('Moderatör katılımcı değildir');
+  await a('/api/admin/sifirla', { kapsam: 'hepsi' }); await a('/api/admin/kurulum', { sablon: 'demo' });
+  await a('/api/admin/katilimci/id-aktar', { metin: '61001;A;Mod A;Moderatör;m\n61002;A;Kat 1;Müdür\n61003;A;Kat 2;Müdür\n61004;A;Kat 3;Müdür' });
+  v = (await a('/api/admin/view')).j; const modA = v.katilimcilar.find(k => k.kod === '61001'), kat1 = v.katilimcilar.find(k => k.kod === '61002'), keyM = v.masalar.find(x => x.id === 'A').key;
+  t('moderatör ID\'si "m" işaretiyle moderatör olur', modA.kolay === true);
+  t('masadaki katılımcı sayısı moderatörü saymaz (3)', v.masalar.find(x => x.id === 'A').atanan === 3);
+  await a('/api/admin/asama', { asama: 'guclu' }); await a('/api/masa/A/tur?k=' + keyM, { tur: 'G', islem: 'ac', postit: 10 }, false);
+  r = await a('/api/p/' + modA.token + '/oy', { tur: 'G', alloc: { 1: 1 } }, false); t('moderatör oy veremez (403)', r.s === 403);
+  r = await a('/api/p/' + modA.token + '/fikir', { ad: 'x' }, false); t('moderatör fikir giremez (403)', r.s === 403);
+  r = await a('/api/p/' + modA.token + '/secim-puan', { fikirId: 'x', puan: 3 }, false); t('moderatör puan veremez (403)', r.s === 403);
+  r = await a('/api/p/' + modA.token + '/view', null, false); t('moderatör bilgisi: kolay=true, masa A; katılımcı ekranını izleyebilir (görünüm 200)', r.s === 200 && r.j.ben.kolay === true && r.j.ben.masa === 'A' && !!r.j.masa);
+  await a('/api/admin/simule', { tur: 'oy' }); v = (await a('/api/admin/view')).j;
+  t('demo oyları yalnızca katılımcılar için üretilir', v.katilimcilar.find(k => k.kod === '61001').oy.G === false && v.katilimcilar.find(k => k.kod === '61002').oy.G === true && v.masalar.find(x => x.id === 'A').tur.G.oyVeren === 3);
+  r = await a('/api/p/' + kat1.token + '/oy', { tur: 'G', alloc: { 1: 1 } }, false); t('katılımcı etkilenmez (oy 409/400 olabilir, 403 değil)', r.s !== 403);
+  console.log('Demo: eşitlik oluştur ve dar oylama oylarını üret');
+  await a('/api/admin/sifirla', { kapsam: 'hepsi' }); await a('/api/admin/kurulum', { sablon: 'demo' });
+  await a('/api/admin/katilimci/id-aktar', { metin: '71000;A;Mod;Moderatör;m\n' + [1, 2, 3, 4, 5, 6, 7, 8].map(i => '7100' + i + ';A;Kat ' + i + ';Müdür').join('\n') });
+  v = (await a('/api/admin/view')).j; const keyD = v.masalar.find(x => x.id === 'A').key;
+  await a('/api/admin/asama', { asama: 'guclu' }); await a('/api/admin/simule', { tur: 'swot', turKodu: 'G' }); await a('/api/admin/simule', { tur: 'oy' });
+  await a('/api/admin/simule', { tur: 'esit-swot', turKodu: 'G' }); await a('/api/masa/A/tur?k=' + keyD, { tur: 'G', islem: 'kapat' }, false);
+  r = await a('/api/masa/A/view?k=' + keyD, null, false); t('eşitlik oluştur: ilk 5 sınırında eşit oy (eşitlik=true)', r.j.sonuc.G.esitlik === true);
+  r = await a('/api/masa/A/tur?k=' + keyD, { tur: 'G', islem: 'dar-ac' }, false); t('dar oylama açılır', r.s === 200);
+  await a('/api/admin/simule', { tur: 'dar-oy-uret', esit: false }); r = await a('/api/masa/A/view?k=' + keyD, null, false); t('demo dar oylama oyları üretilir (8 katılımcı)', r.j.tur.G.dar.oyVeren === 8);
+  await a('/api/admin/simule', { tur: 'dar-oy-uret', esit: true }); await a('/api/masa/A/tur?k=' + keyD, { tur: 'G', islem: 'dar-kapat' }, false); r = await a('/api/masa/A/view?k=' + keyD, null, false);
+  t('beraberlik çıkar: dar oylamada da eşitlik, kura gerekir', !!r.j.tur.G.dar.kuraGerek);
+  await a('/api/admin/simule', { tur: 'fikir-demo', masa: 'A', adim: 'sonuc' }); await a('/api/admin/simule', { tur: 'esit-fikir' });
+  r = await a('/api/masa/A/view?k=' + keyD, null, false); t('fikirlerde eşitlik oluştur: 2. ve 3. fikir tam aynı puan', !!r.j.secim.esit && r.j.secim.esit.adaylar.length >= 2);
+  r = await a('/api/masa/A/secim?k=' + keyD, { islem: 'dar-ac' }, false); t('fikir dar oylaması açılır', r.s === 200 && r.j.secim.dar.durum === 'acik');
+  await a('/api/admin/simule', { tur: 'dar-oy-uret', esit: false }); r = await a('/api/masa/A/view?k=' + keyD, null, false); t('demo fikir dar oyları üretilir', r.j.secim.dar.oyVeren >= 7);
+  await a('/api/masa/A/secim?k=' + keyD, { islem: 'dar-kapat' }, false); r = await a('/api/masa/A/view?k=' + keyD, null, false); t('fikir dar oylaması kapanır (sonuç ya da kura)', !!r.j.secim.dar.secilen || !!r.j.secim.dar.kuraGerek);
+  console.log('Fikirlerde ekranda aynı görünen puan (virgülden sonra ilk hane)');
+  await a('/api/admin/sifirla', { kapsam: 'hepsi' }); await a('/api/admin/kurulum', { sablon: 'demo' });
+  await a('/api/admin/katilimci/id-aktar', { metin: [1, 2, 3, 4, 5, 6, 7, 8].map(i => '9100' + i + ';A;A' + i + ';M').concat([1, 2, 3, 4, 5, 6, 7, 8].map(i => '9200' + i + ';B;B' + i + ';M')).join('\n') });
+  v = (await a('/api/admin/view')).j;
+  for (const [masaId, bozuk] of [['A', false], ['B', true]]) {
+    const ks = v.katilimcilar.filter(k => k.masa === masaId), key = v.masalar.find(x => x.id === masaId).key;
+    for (const [i, ad] of ['X fikri', 'Y fikri', 'Z fikri'].entries()) await a('/api/p/' + ks[i].token + '/fikir', { ad }, false);
+    await a('/api/masa/' + masaId + '/secim?k=' + key, { islem: 'baslat' }, false);
+    const fi = Object.fromEntries((await a('/api/masa/' + masaId + '/view?k=' + key, null, false)).j.secim.fikirler.map(f => [f.ad[0], f.id]));
+    const ver = async (k, f, p) => a('/api/p/' + k.token + '/secim-puan', { fikirId: fi[f], puan: p }, false);
+    const [aX, aY, aZ, r4, r5, r6, r7, r8] = ks;
+    const Y = [4, 4, 5, 4, 5], Z = [bozuk ? 4 : 5, 4, 4, 5, 4]; // A: Y ve Z ortalaması 31/7 = 4,4 (ikisi de); B: Z 30/7 = 4,3
+    [r4, r5, r6, r7, r8].forEach((k, i) => { ver(k, 'X', 5); ver(k, 'Y', Y[i]); ver(k, 'Z', Z[i]); });
+    await ver(aX, 'Y', 4); await ver(aX, 'Z', 4); await ver(aZ, 'X', 5); await ver(aZ, 'Y', 5); await ver(aY, 'X', 5); await ver(aY, 'Z', 5);
+    await a('/api/masa/' + masaId + '/secim?k=' + key, { islem: 'hesapla' }, false);
+    const sc = (await a('/api/masa/' + masaId + '/view?k=' + key, null, false)).j.secim, o = Object.fromEntries(sc.sonuc.map(x => [x.ad[0], Math.round(x.ort * 10) / 10]));
+    if (!bozuk) t('4,4 ve 4,4: ekranda aynı puan → dar oylama (' + o.Y + ' / ' + o.Z + ')', o.Y === o.Z && !!sc.esit && sc.esit.adaylar.length === 2);
+    else t('4,4 ve 4,3: ekranda farklı puan → dar oylama yok (' + o.Y + ' / ' + o.Z + ')', o.Y !== o.Z && !sc.esit);
+  }
+  console.log('Genel kurul: sunum süresi bitince puanlama kendiliğinden açılır');
+  await a('/api/admin/sifirla', { kapsam: 'hepsi' }); await a('/api/admin/kurulum', { sablon: 'demo' });
+  await a('/api/admin/katilimci/id-aktar', { metin: '93001;A;K1;M\n93002;A;K2;M\n93003;B;K3;M\n93004;B;K4;M' });
+  await a('/api/admin/simule', { tur: 'fikir', masa: 'A' }); await a('/api/admin/fikir/numaralandir', { mod: 'sirali' });
+  await a('/api/admin/ayar', { sunumSn: 5, puanSn: 5 }); v = (await a('/api/admin/view')).j; const fGK = v.fikirler.find(f => f.no === 1);
+  await a('/api/admin/sunum', { islem: 'sec', fikirId: fGK.id }); await a('/api/admin/sunum', { islem: 'baslat' });
+  v = (await a('/api/admin/view')).j; t('sunum başladı (puanlama henüz kapalı)', v.sunum.durum === 'sunum');
+  await new Promise(r => setTimeout(r, 5600)); v = (await a('/api/admin/view')).j; t('sunum süresi bitince puanlama kendiliğinden açıldı', v.sunum.durum === 'puan');
+  await new Promise(r => setTimeout(r, 5600)); v = (await a('/api/admin/view')).j; t('puan süresi bitince kendiliğinden kapandı', v.sunum.durum === 'kapali');
+  await a('/api/admin/ayar', { otoPuan: false, sunumSn: 5 }); await a('/api/admin/sunum', { islem: 'baslat' }); await new Promise(r => setTimeout(r, 5600)); v = (await a('/api/admin/view')).j; t('otomatik açma kapalıyken puanlama açılmaz (elle açılır)', v.sunum.durum === 'sunum');
+  await a('/api/admin/ayar', { otoPuan: true, sunumSn: 165, puanSn: 30 });
   console.log('Ortak geri sayım ve tema tablosu senkronu');
   await a('/api/admin/sifirla', { kapsam: 'hepsi' });
   await a('/api/admin/kurulum', { sablon: 'demo' }); await a('/api/admin/katilimci/toplu', { adet: 3 });
@@ -245,7 +323,7 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   r = await a('/api/kod/4818', null, false); t('küçük harfle girilen masa atanır', r.j.masa === '3A');
   r = await a('/api/kod/9999', null, false); t('yanlış ID reddedilir', r.s === 404);
   v = (await a('/api/admin/view')).j; const k17 = v.katilimcilar.find(k => k.kod === '4817');
-  await a('/api/admin/katilimci/' + k17.id, { masa: '5B' }); r = await a('/api/kod/4817', null, false); t('yönetici ID\'yi başka masaya taşıyınca giriş yeni masayı gösterir', r.j.masa === '5B');
+  await a('/api/admin/katilimci/' + k17.id, { masa: '5B' }); r = await a('/api/kod/4817', null, false); t('katılımcı ID\'yi başka masaya taşıyınca giriş yeni masayı gösterir', r.j.masa === '5B');
   r = await a('/api/admin/katilimci/' + k17.id, { kod: 'x1' }); t('çok kısa ID reddedilir', r.s === 400);
   r = await a('/api/admin/katilimci/' + k17.id, { kod: '4818' }); t('aynı ID iki kişiye verilemez', r.s === 409);
   await a('/api/admin/katilimci/' + k17.id, { kod: 'ab-7' }); r = await a('/api/kod/AB7', null, false); t('özel ID tanımlanabilir (harf/rakam, büyük-küçük harf duyarsız)', r.s === 200 && r.j.token === k17.token);
@@ -263,7 +341,7 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   r = await a('/api/p/' + k17.token + '/view', null, false, 'GET', { 'x-cihaz': 'tel1' }); t('ilk cihaz görünüm alır', r.s === 200);
   await a('/api/admin/katilimci/' + k17.id, { cihazSifirla: true }); r = await a('/api/kod/AB7', null, false, 'GET', { 'x-cihaz': 'tel2' }); t('yönetici sıfırlayınca yeni cihaz girer', r.s === 200);
   let kod429 = 0; for (let i = 0; i < 90; i++) { r = await a('/api/kod/ZZ' + (100 + i), null, false); if (r.s === 429) kod429++; } t('art arda hatalı denemeler engellenir (429)', kod429 > 0);
-  console.log('Moderatör programı');
+  console.log('Yönetici programı');
   v = (await a('/api/admin/view')).j; t('varsayılan program yüklü (28 seans, saat sıralı)', v.program.oge.length === 28 && v.program.oge.every((x, i, d) => i === 0 || x.b >= d[i - 1].b));
   const ilk = v.program.oge[7]; r = await a('/api/admin/program', { kaydir: 5, idx: 7 }); v = (await a('/api/admin/view')).j;
   t('kaydırma: seansın bitişi ve sonrakiler +5 dk', v.program.oge[7].b === ilk.b && v.program.oge[7].e === ilk.e + 5 && v.program.oge[8].b === ilk.e + 5);

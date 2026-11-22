@@ -30,37 +30,37 @@ const TEMALAR = [
 ];
 
 
-/* ---------------------------------------------------- moderatör programı (yalnızca yönetim) */
+/* ---------------------------------------------------- yönetici programı (yalnızca yönetim) */
 function pdk(s) { const m = String(s).match(/(\d{1,2})[.:](\d{2})/); return m ? parseInt(m[1], 10) * 60 + parseInt(m[2], 10) : NaN; }
 function programVarsayilan() {
   const L = [
     ['07.30', '07.40', 'Sunucu ve adres', "Sunucuyu başlat; adres ve QR'ı telefondan dene (Wi-Fi veya tünel).", ''],
     ['07.40', '07.50', 'Hızlı prova ve sıfırlama', 'Ayarlar › Deneme araçları ile uçtan uca dene, sonra "Her şeyi sıfırla".', ''],
     ['07.50', '08.10', 'ID listesi ve kartlar', 'Katılımcılar › ID listesi yapıştır; masa ve tema kontrolü; kartları yazdır.', ''],
-    ['08.10', '08.30', 'Ayarlar ve bağlantılar', 'Süreler: sunum 165 sn (2:45), puanlama 30 sn, masa içi puan 20 sn, gözden geçirme 120 sn. Masa bağlantılarını kolaylaştırıcılara gönder; perdeyi aç.', ''],
+    ['08.10', '08.30', 'Ayarlar ve bağlantılar', 'Süreler: sunum 165 sn (2:45), puanlama 30 sn, masa içi puan 20 sn, gözden geçirme 120 sn. Masa bağlantılarını moderatörlere gönder; perdeyi aç.', ''],
     ['08.30', '09.00', 'Karşılama ve kahvaltı (kayıt, bağlanma)', 'Genel: bağlı sayısını izle (hedef 120/126 ve üzeri); takılanlara yardım et (masa değiştir, cihazı sıfırla). Aşama: Hazırlık.', 'hazirlik'],
     ['09.00', '09.10', 'Açılış: Halil İbrahim YILDIZ', 'İnsan ve Kültür Grup Başkanı.', 'hazirlik'],
     ['09.10', '09.20', 'Açılış: Dr. Ömer EMEÇ', 'Strateji, Dönüşüm ve Ekosistem Genel Müdür Yardımcısı.', 'hazirlik'],
     ['09.20', '09.40', 'Açılış: Recep Süleyman ÖZDİL', 'Genel Müdür.', 'hazirlik'],
     ['09.40', '10.00', 'KÖK Projesi Tanıtımı: Ahmet Coşkun', 'Konu ve yöntem (20 dk). SWOT oylamasını 3 dk açıkla: her post-it flipchart\'ta numaralı bir seçenek, oylar telefondan.', 'hazirlik'],
-    ['10.00', '10.20', 'Kahve molası', 'Masalarda flipchart, tepsi ve post-it hazır mı? Kolaylaştırıcılar panele girebiliyor mu?', ''],
-    ['10.20', '10.42', 'Tur 1 (güçlü): yönerge ve brainwriting', '2 dk yönerge + tam tur (8–10 kişi × 2 dk = 16–20 dk, kolaylaştırıcı dahil). Telefon kullanılmaz. İsterse ortak sayaç başlat.', 'hazirlik'],
+    ['10.00', '10.20', 'Kahve molası', 'Masalarda flipchart, tepsi ve post-it hazır mı? Moderatörler panele girebiliyor mu?', ''],
+    ['10.20', '10.42', 'Tur 1 (güçlü): yönerge ve brainwriting', '2 dk yönerge + tam tur (7–8 katılımcı × 2 dk = 14–16 dk; moderatör yazmaz, süreyi yönetir). Telefon kullanılmaz. İsterse ortak sayaç başlat.', 'hazirlik'],
     ['10.42', '11.10', 'Tur 1: okuma, yapıştırma, eleme', 'Post-it\'ler tek tek okunur, aynı şeyi söyleyenler elenir, flipchart\'a numaralı yapıştırılır (28 dk). Gerekirse sohbet ve tartışma için kullan.', 'hazirlik'],
-    ['11.10', '11.15', 'Güçlü yan oylaması', 'Aşama: Güçlü yön oylaması. Kolaylaştırıcılar panelden flipchart üzerindeki post-it sayısını girip oylamayı açar (oy hakkı post-it/2, en çok 15; en fazla 2). 5 dk.', 'guclu'],
-    ['11.15', '11.20', 'Güçlü yan: içerik ve seans kapanışı', 'Oylama kapanınca kolaylaştırıcı ilk 5 post-it\'in içeriğini yazar (eşitlik varsa masayla seçer) ve "Seansı kapat" der; bulgular sisteme kaydedilir. 5 dk.', ''],
+    ['11.10', '11.15', 'Güçlü yan oylaması', 'Aşama: Güçlü yön oylaması. Moderatörler panelden flipchart üzerindeki post-it sayısını girip oylamayı açar (oy hakkı post-it/2, en çok 15; en fazla 2). 5 dk.', 'guclu'],
+    ['11.15', '11.20', 'Güçlü yan: içerik ve seans kapanışı', 'Oylama kapanınca moderatör ilk 5 post-it\'in içeriğini yazar (eşitlik varsa masayla seçer) ve "Seansı kapat" der; bulgular sisteme kaydedilir. 5 dk.', ''],
     ['11.20', '11.40', 'Ara (20 dk)', 'Güçlü oylama "Kapandı" mı? Zayıf yan için masaları hazırla: flipchart\'ta yeni sayfa, tepsiler.', ''],
-    ['11.40', '12.02', 'Tur 2 (zayıf): yönerge ve brainwriting', '2 dk yönerge + tam tur (8–10 kişi × 2 dk = 16–20 dk). Güçlü yan kapanmadan zayıf yan açılmaz.', ''],
+    ['11.40', '12.02', 'Tur 2 (zayıf): yönerge ve brainwriting', '2 dk yönerge + tam tur (7–8 katılımcı × 2 dk = 14–16 dk). Güçlü yan kapanmadan zayıf yan açılmaz.', ''],
     ['12.02', '12.30', 'Tur 2: okuma, yapıştırma, eleme', 'Aynı akış; zayıf yönler (28 dk).', ''],
     ['12.30', '12.35', 'Zayıf yan oylaması', 'Aşama: Zayıf yön oylaması. 5 dk.', 'zayif'],
-    ['12.35', '12.40', 'Zayıf yan: içerik ve seans kapanışı, pano', 'Kolaylaştırıcılar zayıf yanların ilk 5 post-it içeriğini yazıp "Seansı kapat" der. Yönetim › SWOT aşaması: tüm masalarda iki seans "seans kapandı" mı? 5 dk.', ''],
+    ['12.35', '12.40', 'Zayıf yan: içerik ve seans kapanışı, pano', 'Moderatörler zayıf yanların ilk 5 post-it içeriğini yazıp "Seansı kapat" der. Yönetim › SWOT aşaması: tüm masalarda iki seans "seans kapandı" mı? 5 dk.', ''],
     ['12.40', '14.00', 'Öğle yemeği (80 dk)', 'SWOT oyları CSV yedeği al. 13.45\'te aşamayı Fikir yazımı yap.', ''],
-    ['14.00', '14.10', 'Tema tablosu', 'Genel › Tema tablosu: "Tüm telefonlarda aç". Kolaylaştırıcılar tabloyu sesli okur. 10 dk.', 'fikir'],
+    ['14.00', '14.10', 'Tema tablosu', 'Genel › Tema tablosu: "Tüm telefonlarda aç". Moderatörler tabloyu sesli okur. 10 dk.', 'fikir'],
     ['14.10', '14.35', 'Sessiz brainstorming', 'Genel › Süre sayacı: "Fikir geliştirme" 25 dk. Herkes tablodan ilham alıp kâğıda bir dizi fikir yazar; en etkili üçünü, sonra birini seçip telefonundan girer.', 'fikir'],
-    ['14.35', '14.55', 'Masada anlatma ve puanlama', 'Kolaylaştırıcılar: sunumları başlat (fikirler 1\'den sırayla anlatılır, herkes dinledikçe puanlar), puanlamayı sonlandır, 2. ve 3. fikir TAM aynı puandaysa dar oylama (gerekirse kura), ilk 2\'yi kaydet. Genel tablodan masaları izle. 20 dk.', 'fikir'],
-    ['14.55', '15.15', 'Sunuma hazırlık ve numaralandırma', 'Masalar iki öneriyi detaylandırıp gönderir (yazar telefondan yazar). İsteğe bağlı: kolaylaştırıcı öneri adlarını masa ekranında tek cümleye getirebilir; zorunlu değil. 20 dk. Önerisi 2/2 olmayan masaları kontrol et. Sonunda Fikirler ve sunum › "Masa sırasıyla numaralandır" (28 öneri, 1A→7B) ve aşama: Sunumlar.', 'fikir'],
+    ['14.35', '14.55', 'Masada anlatma ve puanlama', 'Moderatörler: sunumları başlat (fikirler 1\'den sırayla anlatılır, herkes dinledikçe puanlar), puanlamayı sonlandır, 2. ve 3. fikir ekranda aynı puanı gösteriyorsa (örn. 4,4 ve 4,4) dar oylama (gerekirse kura), ilk 2\'yi kaydet. Genel tablodan masaları izle. 20 dk.', 'fikir'],
+    ['14.55', '15.15', 'Sunuma hazırlık ve numaralandırma', 'Masalar iki öneriyi detaylandırıp gönderir (yazar telefondan yazar). İsteğe bağlı: moderatör öneri adlarını masa ekranında tek cümleye getirebilir; zorunlu değil. 20 dk. Önerisi 2/2 olmayan masaları kontrol et. Sonunda Fikirler ve sunum › "Masa sırasıyla numaralandır" (28 öneri, 1A→7B) ve aşama: Sunumlar.', 'fikir'],
     ['15.15', '15.35', 'Kahve molası (20 dk)', 'İlk öneriyi seç ("İlk öneriyi seç"); perde ve telefonlar hazır.', ''],
     ['15.35', '17.15', 'Genel kurul: 28 öneri (tek seans)', 'Öneri başına 3:15 (2 dk 45 sn sunum + 30 sn puan ve geçiş) = 91:00; 17.06\'da biter, kalan 9 dk taşma payıdır. Başlangıçlar: 1→15.35, 5→15.48, 9→16.01, 13→16.14, 17→16.27, 21→16.40, 25→16.53, 28→17.02:45. Sunum süresini sıkı tut; gecikme olursa +dk düğmesiyle kaydır. Gecikme olmadıysa 17.06\'da sonuca geç.', 'sunum'],
-    ['17.15', '17.30', 'Sonuç ve kapanış', 'Sonuçları yayına al: matris (2 dk), öne çıkan öneriler (3 dk). Sonra mesajlar: sahiplenme, proje bıkkınlığı, kılcal damarlara inme, yönetim düzeyinde kalmama (üst yönetici, 5 dk); ekiplere anlatma görevi (3 dk); teşekkür (2 dk) = 15 dk.', 'sonuc'],
+    ['17.15', '17.30', 'Sonuç ve kapanış', 'Sonuçları yayına al: matris (2 dk), öne çıkan öneriler (3 dk). Sonra mesajlar: sahiplenme, proje bıkkınlığı, kılcal damarlara inme, yönetim düzeyinde kalmama (üst katılımcı, 5 dk); ekiplere anlatma görevi (3 dk); teşekkür (2 dk) = 15 dk.', 'sonuc'],
     ['17.30', '18.00', 'Toplama ve kayıt', 'CSV\'leri indir (matris, puanlar, SWOT oyları, adlı katılımcı listesi); sonra veriyi sil.', ''],
   ];
   return { oge: L.map(([b, e, ad, not, asama]) => ({ b: pdk(b), e: pdk(e), ad, not, asama })) };
@@ -111,7 +111,7 @@ function bosDurum(sablon = 'ana') {
     asama: 'hazirlik', // hazirlik | guclu | zayif | fikir | sunum | sonuc
     ayar: { baseUrl: (process.env.BASE_URL || '').replace(/\/$/, ''), zorunluTam: true, kendiMasaPuan: false, esik: 'orta', esikDeger: 3, ayrilikEsigi: 1.2,
       sunumSn: 165, puanSn: 30, minPuanYuzde: 80, otoKapat: true, acikKatilim: false, kayitKapali: false, sonucSlayt: 0,
-      secimPuanSn: 20, gozdenSn: 120, cihazKilidi: false },
+      secimPuanSn: 20, gozdenSn: 120, cihazKilidi: false, otoPuan: true },
     masalar: masalarKur(sablon),
     katilimcilar: {},
     oylar: {},            // "masa|tur" -> { pid: {alloc, ts} }
@@ -120,7 +120,7 @@ function bosDurum(sablon = 'ana') {
     puanlar: {},          // fikirId -> { pid: {etki, uyg, ts} }
     bireyFikir: {},       // pid -> { masa, ad, ts }  (katılımcının kendi fikri)
     zaman: { etiket: '', bitis: 0, toplam: 0 }, // ortak geri sayım (telefonlarda ve perdede)
-    program: programVarsayilan(),               // günün programı: yalnızca moderatör paneli
+    program: programVarsayilan(),               // günün programı: yalnızca yönetici paneli
     secim: {},            // masaId -> masa içi fikir seçimi durumu
     detay: {},            // fikirId -> { takim:[pid], alan:{anahtar:metin}, gonder:bool, ts }  (önerinin sunum içeriği)
     secimPuan: {}         // masaId -> { fikirId(sahip pid) -> { puanlayan pid -> {p, ts} } }
@@ -213,7 +213,9 @@ function katilimciBul(token) {
   for (const k of Object.values(S.katilimcilar)) if (k.token === token) return k;
   return null;
 }
-function atananlar(masaId) { return Object.values(S.katilimcilar).filter(k => k.masa === masaId); }
+function moderatorTemizle() { for (const k of Object.values(S.katilimcilar)) if (k.kolay) katilimciTemizle(k.id); } // moderatör katılımcı değildir: varsa eski oy, fikir ve puan kayıtları silinir
+function masaUyeleri(masaId) { return Object.values(S.katilimcilar).filter(k => k.masa === masaId); } // masadaki herkes (moderatör dahil)
+function atananlar(masaId) { return masaUyeleri(masaId).filter(k => !k.kolay); } // yalnızca katılımcılar: moderatör oy, fikir ve puan sürecine girmez
 function yeniKod() {
   const kullanilan = new Set(Object.values(S.katilimcilar).map(k => k.kod));
   for (let i = 0; i < 20000; i++) { const k = String(10000 + crypto.randomInt(90000)); if (!kullanilan.has(k)) return k; }
@@ -233,7 +235,7 @@ function cihazKontrol(k, req) {
   if (!c) return S.ayar.cihazKilidi ? 'Tarayıcı tanımlanamadı. Sayfayı yenileyin.' : null;
   k.cihazlar = k.cihazlar || [];
   if (k.cihazlar.includes(c)) return null;
-  if (S.ayar.cihazKilidi && k.cihazlar.length >= 1) return 'Bu katılım kimliği başka bir cihazda kullanılıyor. Lütfen masanızın kolaylaştırıcısına başvurun.';
+  if (S.ayar.cihazKilidi && k.cihazlar.length >= 1) return 'Bu katılım kimliği başka bir cihazda kullanılıyor. Lütfen masanızın moderatörüne başvurun.';
   if (k.cihazlar.length < 5) { k.cihazlar.push(c); persist(); }
   return null;
 }
@@ -329,7 +331,7 @@ function fikirGor(f) {
 }
 function sunumGor() {
   const s = S.sunum, f = aktifFikir();
-  const hak = Object.values(S.katilimcilar).filter(k => k.masa && (S.ayar.kendiMasaPuan || !f || k.masa !== f.masa)).length;
+  const hak = Object.values(S.katilimcilar).filter(k => k.masa && !k.kolay && (S.ayar.kendiMasaPuan || !f || k.masa !== f.masa)).length;
   const p = f ? Object.keys(S.puanlar[f.id] || {}).length : 0;
   const liste = S.fikirler.filter(x => x.no != null && x.ad).sort((a, b) => a.no - b.no), ix = f ? liste.findIndex(x => x.id === f.id) : -1, sd = ix >= 0 ? liste[ix + 1] : liste[0];
   return { sira: liste.map(x => ({ no: x.no, masa: x.masa })), siradaki: sd ? { no: sd.no, masa: sd.masa } : null, durum: s.durum, fikir: fikirGor(f), sunumBas: s.sunumBas, sunumSn: s.sunumSn, puanKapanis: s.puanKapanis, puanSn: s.puanSn,
@@ -340,6 +342,14 @@ let puanTimer = null;
 function puanZamanla() {
   clearTimeout(puanTimer);
   const s = S.sunum;
+  if (s.durum === 'sunum' && s.sunumBas && S.ayar.otoPuan !== false) { // sunum süresi dolunca puanlama kendiliğinden açılır ("Puanlamayı aç" düğmesiyle daha erken de açılabilir)
+    const w = Math.max(0, s.sunumBas + s.sunumSn * 1000 - Date.now());
+    puanTimer = setTimeout(() => {
+      const x = S.sunum;
+      if (x.durum === 'sunum' && Date.now() >= x.sunumBas + x.sunumSn * 1000 - 50) { x.durum = 'puan'; x.puanSn = S.ayar.puanSn; x.puanKapanis = x.puanSn > 0 ? Date.now() + x.puanSn * 1000 : 0; commit(); puanZamanla(); } else puanZamanla();
+    }, w + 30);
+    return;
+  }
   if (s.durum === 'puan' && s.puanKapanis && S.ayar.otoKapat) {
     const w = Math.max(0, s.puanKapanis - Date.now());
     puanTimer = setTimeout(() => {
@@ -356,7 +366,7 @@ function zamanGor() { const z = S.zaman || {}; return { etiket: z.etiket || '', 
 /* ------------------------------------------------------------ öneri detayları (sunum içeriği) */
 const DETAY_ALAN = [ // genel kurulda 2-3 dakikalık sunum için sade tutuldu; SWOT dayanağı fikir girişindeki seçimden otomatik gelir
   { k: 'uygulama', ad: 'Ne yapılacak?', ipucu: 'Somut uygulama: bir iki cümle', ornek: 'Her cuma 15 dakikalık ayakta toplantı yapılır; ekip üç soruyu yanıtlar: ne öğrendik, ne işe yaradı, neyi değiştirelim?', max: 200 },
-  { k: 'kapsam', ad: 'Kimler için, nerede?', ipucu: 'Kapsam ve katılım', ornek: 'Şube ve genel müdürlük ekipleri; ilk aşamada 3 bölge, yaklaşık 40 yönetici.', max: 200 },
+  { k: 'kapsam', ad: 'Kimler için, nerede?', ipucu: 'Kapsam ve katılım', ornek: 'Şube ve genel müdürlük ekipleri; ilk aşamada 3 bölge, yaklaşık 40 katılımcı.', max: 200 },
   { k: 'katki', ad: 'Beklenen öğrenme katkısı', ipucu: 'Öğrenme, paylaşım veya işe aktarımda ne değişecek?', ornek: 'Öğrenilenler ekipler arasında hızla paylaşılır; aynı hata farklı birimlerde tekrarlanmaz.', max: 200 },
   { k: 'basari', ad: 'Başarı göstergesi', ipucu: 'İşe yaradığını hangi değişimden anlayacağız?', ornek: 'Üç ay sonra ekiplerin %70\'i haftalık toplantıya düzenli katılıyor; tekrar eden hata sayısı azalıyor.', max: 200 },
   { k: 'ilkadim', ad: 'İlk adım ve sahiplik', ipucu: 'Nasıl başlanacak, sorumlu kim, ilk deneme ne kadar sürecek?', ornek: 'İlk ay bir pilot bölgede deneme; sorumlu bölge koordinatörü.', max: 200 }
@@ -369,7 +379,7 @@ function detayGor(masaId, pid) {
     return { id: f.id, sira: f.sira, no: f.no, ad: f.ad, gonder: !!d.gonder, alan: d.alan || {}, swot: swotListe(S.masalar[masaId], f.swot || []), benim: !!pid && d.takim.includes(pid),
       takim: d.takim.map(x => (S.katilimcilar[x] || {}).etiket).filter(Boolean) }; });
 }
-function detayIslem(m, k, b, yetkili) { // k: katılımcı (kolaylaştırıcı/yönetim için null olabilir)
+function detayIslem(m, k, b, yetkili) { // k: katılımcı (moderatör/yönetim için null olabilir)
   const f = S.fikirler.find(x => x.id === b.fikirId && x.masa === m.id && x.ad); if (!f) return 'Bu masada böyle bir öneri yok.';
   const d = detayOf(f.id), uye = !!k && d.takim.includes(k.id), yet = yetkili || (!!k && !!k.kolay);
   if (b.islem === 'katil') { // "yazmayı ben üstleniyorum": öneri başına tek yazar; başkası yazıyorsa devralınamaz (yazar çevrimdışıysa 2 dk sonra devralınabilir)
@@ -409,7 +419,7 @@ function swotListe(m, kodlar) { const o = m ? swotSecenek(m) : {}; return kodlar
 function swotMetin(m, kodlar) { const o = swotSecenek(m); return metin1(kodlar.map(k => k + (o[k] && o[k].etiket ? ': ' + metin1(o[k].etiket, 45) : '')).join('; '), 200); }
 function secimOf(masaId) { if (!S.secim[masaId]) S.secim[masaId] = yeniSecim(); return S.secim[masaId]; }
 function masaFikirleri(masaId) {
-  return Object.entries(S.bireyFikir).filter(([pid, f]) => f.masa === masaId && f.ad && S.katilimcilar[pid] && S.katilimcilar[pid].masa === masaId).map(([pid, f]) => ({ id: pid, ad: f.ad, swot: f.swot || [], ts: f.ts })).sort((a, b) => a.ts - b.ts);
+  return Object.entries(S.bireyFikir).filter(([pid, f]) => f.masa === masaId && f.ad && S.katilimcilar[pid] && !S.katilimcilar[pid].kolay && S.katilimcilar[pid].masa === masaId).map(([pid, f]) => ({ id: pid, ad: f.ad, swot: f.swot || [], ts: f.ts })).sort((a, b) => a.ts - b.ts);
 }
 function katilimciTemizle(id) { // silinen katılımcıya bağlı fikir, oy, puan ve yazarlık kayıtları
   delete S.bireyFikir[id]; delete seen[id];
@@ -433,7 +443,7 @@ function secimZamanla(masaId) {
 }
 function secimPuanKabul(s, fikirId) {
   const t = Date.now();
-  if (s.durum === 'sunum') return s.sira.includes(fikirId); // sunumlar başlayınca dinledikçe herkes istediği fikri puanlar; kolaylaştırıcı "puanlamayı sonlandır" der
+  if (s.durum === 'sunum') return s.sira.includes(fikirId); // sunumlar başlayınca dinledikçe herkes istediği fikri puanlar; moderatör "puanlamayı sonlandır" der
   if (s.durum === 'gozden') return s.sira.includes(fikirId) && (!s.gozdenKapanis || t <= s.gozdenKapanis + 500);
   return false;
 }
@@ -459,9 +469,11 @@ function secimHesapla(masaId) {
 /* masanın önerisi olacak ilk K fikrin sınırında TAM AYNI puan (z) varsa: eşit kalan fikirler arasında dar oylama */
 function secimEsit(m) {
   const s = secimOf(m.id), L = s.sonuc && s.sonuc.liste, k = m.fikirSayisi; if (!L || L.length <= k) return null;
-  const z0 = L[k - 1].z, ayni = x => Math.abs(x.z - z0) < 1e-9, bas = L.findIndex(ayni);
-  if (!ayni(L[k])) return null;
-  const adaylar = L.filter(ayni), kesin = L.slice(0, bas);
+  const r1 = x => Math.round(x.ort * 10); // ekranda görünen puan (virgülden sonra ilk hane): katılımcılar aynı görüyorsa eşit sayılır (4,4 ile 4,4)
+  const yakin = (x, y) => Math.abs(x.z - y.z) < 1e-9 || r1(x) === r1(y);
+  if (!yakin(L[k - 1], L[k])) return null;
+  const idx = L.map((x, i) => (yakin(x, L[k - 1]) || yakin(x, L[k])) ? i : -1).filter(i => i >= 0), bas = Math.min(...idx, k - 1), son = Math.max(...idx, k);
+  const adaylar = L.slice(bas, son + 1), kesin = L.slice(0, bas);
   return { adaylar: adaylar.map(x => x.id), kesin: kesin.map(x => x.id), yer: k - kesin.length };
 }
 function secimDarSayim(m, d) { const say = {}; for (const [pid, ids] of Object.entries(d.oylar || {})) if (S.katilimcilar[pid] && S.katilimcilar[pid].masa === m.id) for (const id of ids) say[id] = (say[id] || 0) + 1; return d.adaylar.map(id => ({ id, oy: say[id] || 0 })).sort((a, b) => b.oy - a.oy); }
@@ -486,7 +498,7 @@ function secimIslem(m, b) {
   if (i === 'hesapla') { secimHesapla(m.id); s.durum = 'bitti'; s.puanAcik = false; s.dar = null; return null; }
   if (i === 'dar-ac') {
     if (s.durum !== 'bitti' || !s.sonuc) return 'Önce puanlamayı sonlandırın.';
-    const e = secimEsit(m); if (!e) return 'Tam eşit puan yok; dar oylama gerekmiyor.';
+    const e = secimEsit(m); if (!e) return 'Ekranda aynı görünen (eşit) puan yok; dar oylama gerekmiyor.';
     if (s.dar && s.dar.durum === 'acik') return 'Dar oylama zaten açık.';
     const n = e.adaylar.length; s.dar = { durum: 'acik', adaylar: e.adaylar, kesin: e.kesin, yer: e.yer, hak: Math.max(1, Math.min(n - 1, Math.ceil(n / 2))), oylar: {}, kuraGerek: null, secilen: null, kura: null }; return null;
   }
@@ -557,7 +569,7 @@ function masaSecimGor(m) {
 function temaTablo(temaNo) {
   const out = { tema: temaNo, ad: temaAd(temaNo), masalar: [] };
   for (const m of Object.values(S.masalar)) if (m.tema === temaNo) {
-    const g = tur => { const b = m.bulgular && m.bulgular[tur]; return b ? b.map(x => ({ no: x.no, oy: x.oy, etiket: x.metin })) : null; }; // yalnızca kolaylaştırıcının "Seansı kapat" ile kaydettiği son hal
+    const g = tur => { const b = m.bulgular && m.bulgular[tur]; return b ? b.map(x => ({ no: x.no, oy: x.oy, etiket: x.metin })) : null; }; // yalnızca moderatörün "Seansı kapat" ile kaydettiği son hal
     out.masalar.push({ id: m.id, G: g('G'), Z: g('Z') });
   }
   out.masalar.sort((a, b) => a.id.localeCompare(b.id));
@@ -617,14 +629,14 @@ function masaView(m) {
     bagli: atananlar(m.id).filter(k => Date.now() - (seen[k.id] || 0) < 90000).length,
     fikirler: S.fikirler.filter(f => f.masa === m.id).sort((a, b) => a.sira - b.sira).map(f => ({ sira: f.sira, ad: f.ad, no: f.no })), sunum: sunumGor() };
   for (const tur of ['G', 'Z']) {
-    v.tur[tur] = Object.assign({}, turGorunum(m, tur)); if (m.tur[tur].dar) v.tur[tur].dar.sayim = darSayim(m.tur[tur]); // sayım yalnızca kolaylaştırıcıya
+    v.tur[tur] = Object.assign({}, turGorunum(m, tur)); if (m.tur[tur].dar) v.tur[tur].dar.sayim = darSayim(m.tur[tur]); // sayım yalnızca moderatöre
     const r = turSonuc(m.id, tur);
     v.tur[tur].oyVeren = r.oyVeren; v.tur[tur].atanan = r.atanan;
     v.tur[tur].hata = turKontrol(m.tur[tur]);
     v.onerilen[tur] = { oy: oneriOy(m.tur[tur].postit), maxPer: oneriMaxPer(m.tur[tur].alan, m.tur[tur].oy || oneriOy(m.tur[tur].postit)) };
     v.sonuc[tur] = m.tur[tur].durum === 'hazir' ? null : { sirali: r.sirali, ilk: r.ilk, K: r.K, esitlik: r.esitlik, toplamOy: r.toplamOy, liste: r.liste };
   }
-  v.program = (S.program.oge || []).filter(x => x.b >= 510 && x.e <= 1050).map(x => ({ ad: x.ad, b: x.b, e: x.e })); // kolaylaştırıcı yalnızca seans adı ve saatlerini görür (moderatör notları değil)
+  v.program = (S.program.oge || []).filter(x => x.b >= 510 && x.e <= 1050).map(x => ({ ad: x.ad, b: x.b, e: x.e })); // moderatör yalnızca seans adı ve saatlerini görür (yönetici notları değil)
   v.secim = masaSecimGor(m);
   v.detay = detayGor(m.id, null); v.detayAlan = DETAY_ALAN;
   v.zaman = zamanGor();
@@ -645,7 +657,7 @@ function ekranView(req) {
   return v;
 }
 function kayitView() { // kayıt masası görünümü: jeton (oy bağlantısı) içermez
-  const masalar = Object.values(S.masalar).map(m => { const l = atananlar(m.id); return { id: m.id, ad: m.ad, tema: m.tema, temaAd: temaAd(m.tema), atanan: l.length, geldi: l.filter(k => k.geldi).length }; });
+  const masalar = Object.values(S.masalar).map(m => { const l = masaUyeleri(m.id); return { id: m.id, ad: m.ad, tema: m.tema, temaAd: temaAd(m.tema), atanan: l.length, geldi: l.filter(k => k.geldi).length }; });
   const kat = Object.values(S.katilimcilar).map(k => ({ id: k.id, kod: k.kod, etiket: k.etiket, pozisyon: k.pozisyon || '', masa: k.masa, kolay: !!k.kolay, geldi: !!k.geldi, yedek: !!k.yedek, gelmeyecek: !!k.gelmeyecek,
     cihaz: (k.cihazlar || []).length, bagli: Date.now() - (seen[k.id] || 0) < 90000 }));
   return { t: Date.now(), kapali: !!S.ayar.kayitKapali, masalar, katilimcilar: kat };
@@ -664,7 +676,7 @@ function adminView(req) {
   return { t: Date.now(), sablon: S.sablon, asama: S.asama, ayar: S.ayar, baseUrl: baseUrl(req), ips: lanIps(), port: PORT, temalar: TEMALAR,
     zaman: zamanGor(), program: S.program,
     detayDurum: detayDurum(), hazirlik: S.hazirlik || {}, pinVarsayilan: ['kok2026', '1234'].includes(ADMIN_PIN), kayitPinVarsayilan: KAYIT_PIN === 'kayit2026',
-    secimler: Object.fromEntries(Object.values(S.masalar).map(m => [m.id, { durum: (S.secim[m.id] || {}).durum || 'hazir', fikir: masaFikirleri(m.id).length }])),
+    secimler: Object.fromEntries(Object.values(S.masalar).map(m => [m.id, { durum: (S.secim[m.id] || {}).durum || 'hazir', fikir: masaFikirleri(m.id).length, onay: !!(S.secim[m.id] || {}).onay }])), demoHiz: !!S.demoHiz,
     masalar, katilimcilar: kat, fikirler: S.fikirler, sunum: sunumGor(), matris: matris(),
     puanSayilari: Object.fromEntries(S.fikirler.map(f => [f.id, Object.keys(S.puanlar[f.id] || {}).length])) };
 }
@@ -723,7 +735,7 @@ function rastgeleOy(m, tur, oran) { // deneme: masadaki herkes için ağırlıkl
     S.oylar[key][k.id] = { alloc, ts: Date.now() };
   }
 }
-function demoFikir(m, adim) { // kolaylaştırıcı eğitimi: fikir aşamasını istenen adıma getir ("Fikir 1A-1" ...)
+function demoFikir(m, adim) { // moderatör eğitimi: fikir aşamasını istenen adıma getir ("Fikir 1A-1" ...)
   const id = m.id;
   for (let i = atananlar(id).length + 1; i <= 8; i++) katilimciEkle(id, 'Deneme ' + id + '-' + i);
   const kisiler = atananlar(id);
@@ -761,13 +773,100 @@ function demoBulgu(m, tur, tam) { // post-it sayısı, oylar ve (tam ise) içeri
   m.bulgular[tur] = son.map(x => ({ no: x.no, oy: x.oy, metin: m.etiket[tur][x.no] })); t.seansKapali = true;
 }
 
+/* ---------------- yönetici demo akışı: yardımcılar ---------------- */
+const DEMO_HIZ = { sunumSn: 12, puanSn: 10, secimPuanSn: 10, gozdenSn: 30 };
+function demoHiz(ac) { // genel kurulu kısa sürelerle denemek için; kapatılınca asıl süreler geri gelir
+  if (ac) { if (!S.demoHiz) S.demoHiz = { sunumSn: S.ayar.sunumSn, puanSn: S.ayar.puanSn, secimPuanSn: S.ayar.secimPuanSn, gozdenSn: S.ayar.gozdenSn }; Object.assign(S.ayar, DEMO_HIZ); }
+  else if (S.demoHiz) { Object.assign(S.ayar, S.demoHiz); S.demoHiz = null; }
+}
+function icerikSifirla() { // oylar, fikirler, puanlar, sunum, süreç durumu silinir; katılımcılar, masa bağlantıları, ayarlar, program ve hazırlık listesi kalır
+  try { fs.writeFileSync(FILE + '.yedek-' + Date.now(), JSON.stringify(S)); } catch (e) { /* yedek alınamadıysa da devam */ }
+  const eski = S, yeni = bosDurum(eski.sablon);
+  yeni.ayar = eski.ayar; yeni.program = eski.program; yeni.hazirlik = eski.hazirlik || {}; yeni.katilimcilar = eski.katilimcilar; yeni.demoHiz = eski.demoHiz || null;
+  yeni.masalar = {}; for (const m of Object.values(eski.masalar)) { const n = yeniMasa(m.id, m.tema, m.ad); n.key = m.key; n.fikirSayisi = m.fikirSayisi; yeni.masalar[m.id] = n; }
+  for (const k of Object.values(yeni.katilimcilar)) k.cihazlar = [];
+  yeni.ayar.sonucSlayt = 0; S = yeni;
+  for (const id of Object.keys(secimTimers)) clearTimeout(secimTimers[id]);
+}
+function swotBitir(m, tur) { // moderatör yapmadıysa: oylamayı aç/oyları tamamla/kapat/ilk 5'in içeriğini yaz/seansı kapat
+  const t = m.tur[tur]; if (t.seansKapali) return;
+  if (t.durum === 'hazir') { t.postit = 24 + crypto.randomInt(10); t.alan = t.postit; t.oy = oneriOy(t.postit); t.maxPer = oneriMaxPer(t.alan, t.oy); t.ozel = false; t.durum = 'acik'; }
+  if (t.durum === 'acik') { rastgeleOy(m, tur, 0); t.durum = 'bitti'; }
+  t.dar = null;
+  const { kesin, adaylar, yer } = ilkAdaylar(turSonuc(m.id, tur)), son = kesin.concat(adaylar.slice(0, yer)), ad = tur === 'G' ? 'Güçlü Yön' : 'Zayıf Yön';
+  m.bulgular = m.bulgular || { G: null, Z: null }; m.etiket[tur] = m.etiket[tur] || {};
+  for (const x of son) if (!m.etiket[tur][x.no]) m.etiket[tur][x.no] = m.id + ' masası - ' + ad + ' - Post-It #' + x.no;
+  m.bulgular[tur] = son.map(x => ({ no: x.no, oy: x.oy, metin: m.etiket[tur][x.no] })); t.seansKapali = true;
+}
+function secimTamamla(m) { // moderatör yapmadıysa: eksik fikirleri yaz, puanla, sırala, ilk 2'yi kaydet
+  const id = m.id, s = secimOf(id); if (s.onay) return null;
+  const kisiler = atananlar(id), sec = Object.keys(swotSecenek(m));
+  kisiler.forEach((k, i) => { if (!(S.bireyFikir[k.id] && S.bireyFikir[k.id].ad)) S.bireyFikir[k.id] = { masa: id, ad: ORNEK_FIKIRLER[(i * 7 + m.id.length) % ORNEK_FIKIRLER.length], swot: sec.length ? [sec[i % sec.length]] : [], ts: Date.now() + i }; });
+  if (s.durum === 'hazir') { const h = secimIslem(m, { islem: 'baslat' }); if (h) return h; }
+  const P = S.secimPuan[id] = S.secimPuan[id] || {};
+  for (const fid of s.sira) { let h = 0; for (const ch of fid) h = (h * 31 + ch.charCodeAt(0)) % 1000; const me = 2.2 + (h % 30) / 12; P[fid] = P[fid] || {};
+    for (const k of kisiler) if (k.id !== fid && !P[fid][k.id]) P[fid][k.id] = { p: Math.max(1, Math.min(5, Math.round(me + (Math.random() + Math.random() - 1) * 1.6))), ts: Date.now() }; }
+  if (s.durum !== 'bitti') secimIslem(m, { islem: 'hesapla' });
+  return secimIslem(m, { islem: 'onayla', secilen: secimOf(id).sonuc.liste.slice(0, m.fikirSayisi).map(x => x.id) });
+}
+function detayDoldur(m) { // gönderilmemiş önerilerin detayını örnek metinle tamamlayıp gönderir (yazılmış alanlar korunur)
+  for (const f of masaFikirListe(m.id)) {
+    const d = detayOf(f.id); if (d.gonder) continue;
+    if (!(d.takim || []).length) { const k = atananlar(m.id)[0]; if (k) d.takim = [k.id]; }
+    const ornek = { uygulama: f.ad + ' için demo uygulama: haftalık kısa toplantılarla başlanır.', kapsam: 'Demo: iki bölge, pilot ekipler.', katki: 'Demo: öğrenme paylaşımı artar, tekrar eden hatalar azalır.', ilkadim: 'Demo: 4 haftalık pilot; sorumlu bölge koordinatörü.', basari: 'Demo: üç ayda katılım %70, tekrar eden hata sayısı düşer.' };
+    d.alan = d.alan || {}; for (const [k, v] of Object.entries(ornek)) if (!(d.alan[k] || '').trim()) d.alan[k] = v;
+    d.gonder = true; d.ts = Date.now();
+  }
+}
+
+/* ---- demo: eşitlik ve dar oylama üretimi ---- */
+function darOylar(kisiler, adaylar, hak, kendi, esit) { // her kişi için dar oylama seçimi; esit: aday sayıları eşitlenir (kura denemek için)
+  const sonuc = {}, say = Object.fromEntries(adaylar.map(a => [a, 0]));
+  for (const k of kisiler) { const uygun = adaylar.filter(a => a !== kendi(k)), h = Math.min(hak, uygun.length); const sec = uygun.slice().sort(() => Math.random() - 0.5).slice(0, h); sonuc[k.id] = sec; sec.forEach(a => say[a]++); }
+  if (esit) { const min = Math.min(...Object.values(say)); for (const a of adaylar) { let g = 0; while (say[a] > min && g++ < 500) { const k = kisiler.find(x => sonuc[x.id].includes(a)); if (!k) break; sonuc[k.id] = sonuc[k.id].filter(y => y !== a); say[a]--; } } }
+  return sonuc;
+}
+function darOyUret(esit) { // açık dar oylamalarda (SWOT ve fikir) katılımcı oylarını üretir
+  for (const m of Object.values(S.masalar)) {
+    const kisiler = atananlar(m.id);
+    for (const tur of ['G', 'Z']) { const d = m.tur[tur].dar; if (!d || d.durum !== 'acik') continue;
+      const o = darOylar(kisiler, d.adaylar, d.hak, () => null, esit); for (const k of kisiler) if (esit || !d.oylar[k.id]) d.oylar[k.id] = o[k.id]; }
+    const sd = secimOf(m.id).dar; if (sd && sd.durum === 'acik') {
+      const o = darOylar(kisiler, sd.adaylar, sd.hak, k => k.id, esit); for (const k of kisiler) if (esit || !sd.oylar[k.id]) sd.oylar[k.id] = o[k.id]; }
+  }
+}
+function esitSwot(m, tur) { // oylar, ilk K'nın sınırında eşit çıkacak biçimde ayarlanır
+  const t = m.tur[tur], kayit = S.oylar[oyKey(m.id, tur)] || {}; if (t.dar || t.seansKapali) return;
+  const r = turSonuc(m.id, tur), K = Math.min(t.ilkK || 5, r.sirali.length); if (r.sirali.length <= K) return;
+  const A = r.sirali[K - 1].no, B = r.sirali[K].no; let ca = r.sirali[K - 1].oy, cb = r.sirali[K].oy;
+  for (let tur2 = 0; tur2 < 6 && ca > cb; tur2++) for (const e of Object.values(kayit)) {
+    if (ca <= cb) break; if (!(e.alloc[A] > 0)) continue;
+    e.alloc[A]--; ca--; if (!e.alloc[A]) delete e.alloc[A];
+    if (ca > cb && (e.alloc[B] || 0) < t.maxPer) { e.alloc[B] = (e.alloc[B] || 0) + 1; cb++; }
+  }
+}
+function esitFikir(m) { // masa içi puanlar: sıralamanın K. ve K+1. fikri tam aynı puanı alacak şekilde ayarlanır (K sınırında kalması için gerekirse düzeltilir)
+  const s = secimOf(m.id); if (s.onay || !s.sira.length || s.durum === 'hazir') return;
+  const liste0 = secimHesapla(m.id).liste, K = m.fikirSayisi; if (liste0.length <= K) return;
+  const a = liste0[K - 1].id, b = liste0[K].id, P = S.secimPuan[m.id] = S.secimPuan[m.id] || {}; P[a] = P[a] || {}; P[b] = P[b] || {};
+  delete P[a][b]; delete P[b][a];
+  const raters = atananlar(m.id).filter(k => k.id !== a && k.id !== b);
+  for (const k of raters) { const p = (P[a][k.id] || P[b][k.id] || { p: 1 + crypto.randomInt(5) }).p; P[a][k.id] = { p, ts: Date.now() }; P[b][k.id] = { p, ts: Date.now() }; }
+  for (let i = 0; i < 40; i++) { // çift, listede tam K. ve K+1. sırada kalsın
+    const l = secimHesapla(m.id).liste, ia = l.findIndex(x => x.id === a), ib = l.findIndex(x => x.id === b), lo = Math.min(ia, ib);
+    if (lo === K - 1) break; const k = raters[crypto.randomInt(raters.length)]; if (!k) break; const d = lo < K - 1 ? -1 : 1;
+    const p = Math.max(1, Math.min(5, P[a][k.id].p + d)); P[a][k.id].p = p; P[b][k.id].p = p;
+  }
+  if (s.durum === 'bitti') { s.dar = null; secimHesapla(m.id); }
+}
+
 function turAyarla(m, tur, b, yon) { // hata metni döndürür (null = tamam)
   const t = m.tur[tur], eski = t.postit;
   const oyVar = Object.keys(S.oylar[oyKey(m.id, tur)] || {}).length > 0;
   if (oyVar && ((b.postit != null && clampInt(b.postit, 0, 200, t.postit) !== t.postit) || (yon && ((b.oy != null && clampInt(b.oy, 0, 200, t.oy) !== t.oy) || (b.maxPer != null && clampInt(b.maxPer, 1, 50, t.maxPer) !== t.maxPer))))) return 'Bu turda oy kullanıldı; post-it sayısı ve oy kuralları değiştirilemez. Önce oyları sıfırlayın (yönetim).';
   if (b.postit != null) t.postit = clampInt(b.postit, 0, 200, t.postit);
   t.alan = t.postit; // flipchart'taki her post-it oylanabilir bir seçenektir
-  if (!yon) { // kolaylaştırıcı yalnızca post-it sayısını girer; oy hakkı ve en fazla oy otomatik üretilir (yönetimin özel ayarı, post-it değişmedikçe korunur)
+  if (!yon) { // moderatör yalnızca post-it sayısını girer; oy hakkı ve en fazla oy otomatik üretilir (yönetimin özel ayarı, post-it değişmedikçe korunur)
     if (!(t.ozel && t.postit === eski)) { t.oy = oneriOy(t.postit); t.maxPer = oneriMaxPer(t.postit, t.oy); t.ozel = false; }
     return null;
   }
@@ -851,7 +950,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascri
   '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
 // ana adres (/) yalnızca katılım ekranıdır; tüm menü /menu adresindedir
 const SAYFALAR = [[/^\/$/, 'katil.html'], [/^\/menu\/?$/, 'index.html'], [/^\/katil\/?$/, 'katil.html'], [/^\/p\/[a-z0-9]+\/?$/, 'p.html'], [/^\/masa\/[A-Za-z0-9]+\/?$/, 'masa.html'],
-  [/^\/yonetim\/?$/, 'yonetim.html'], [/^\/ekran\/?$/, 'ekran.html'], [/^\/kayit\/?$/, 'kayit.html']];
+  [/^\/yonetim\/?$/, 'yonetim.html'], [/^\/ekran\/?$/, 'ekran.html'], [/^\/kayit\/?$/, 'kayit.html'], [/^\/izle\/?$/, 'izle.html']];
 function dosya(res, rel) {
   const p = path.normalize(path.join(PUB, rel));
   if (!p.startsWith(PUB)) return hata(res, 403, 'yasak');
@@ -865,7 +964,7 @@ function yonetici(req) { return req.headers['x-pin'] === ADMIN_PIN; }
 function masaYetki(req, m, url) {
   if (yonetici(req)) return true;
   const k = url.searchParams.get('k'); if (k && k === m.key) return true;
-  const t = url.searchParams.get('t'); // kolaylaştırıcı olarak işaretli katılımcı, kendi masasının panelini kendi bağlantısıyla açar
+  const t = url.searchParams.get('t'); // moderatör olarak işaretli katılımcı, kendi masasının panelini kendi bağlantısıyla açar
   if (t) { const p = katilimciBul(t); if (p && p.kolay && p.masa === m.id) return true; }
   return false;
 }
@@ -900,6 +999,7 @@ async function api(req, res, url) {
     const k = katilimciBul(mm[1]); if (!k) return hata(res, 404, 'Geçersiz bağlantı.');
     { const ch = cihazKontrol(k, req); if (ch) return hata(res, 403, ch); }
     if (mm[2] === 'view' && M === 'GET') return json(res, pView(k));
+    if (k.kolay && M === 'POST') return hata(res, 403, 'Moderatörler oy, puan ve fikir sürecine katılmaz; bu işlemi katılımcılar yapar.');
     if (mm[2] === 'fikir' && M === 'POST') {
       const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
       if (secimOf(m.id).durum !== 'hazir') return hata(res, 409, 'Fikir girişi kapandı. Sunumlar başladı.');
@@ -967,7 +1067,7 @@ async function api(req, res, url) {
       const e = parseInt(b.etki, 10), u = parseInt(b.uyg, 10);
       if (!(e >= 1 && e <= 5 && u >= 1 && u <= 5)) return hata(res, 400, 'Puanlar 1 ile 5 arasında olmalı.');
       (S.puanlar[f.id] = S.puanlar[f.id] || {})[k.id] = { etki: e, uyg: u, ts: Date.now() };
-      const hak = Object.values(S.katilimcilar).filter(x => S.ayar.kendiMasaPuan || x.masa !== f.masa).length;
+      const hak = Object.values(S.katilimcilar).filter(x => x.masa && !x.kolay && (S.ayar.kendiMasaPuan || x.masa !== f.masa)).length;
       if (S.ayar.otoKapat && Object.keys(S.puanlar[f.id]).length >= hak) S.sunum.durum = 'kapali'; // herkes puan verdiyse pencere erken kapanır
       commit(); return json(res, { ok: true });
     }
@@ -1060,7 +1160,7 @@ async function api(req, res, url) {
     if (rest === 'ayar') {
       const a = S.ayar;
       if (b.baseUrl != null) a.baseUrl = metin(b.baseUrl, 120);
-      for (const k of ['zorunluTam', 'kendiMasaPuan', 'otoKapat', 'acikKatilim', 'cihazKilidi', 'kayitKapali']) if (b[k] != null) a[k] = !!b[k];
+      for (const k of ['zorunluTam', 'kendiMasaPuan', 'otoKapat', 'otoPuan', 'acikKatilim', 'cihazKilidi', 'kayitKapali']) if (b[k] != null) a[k] = !!b[k];
       if (b.esik === 'orta' || b.esik === 'ortalama') a.esik = b.esik;
       if (b.esikDeger != null) a.esikDeger = Math.max(1, Math.min(5, parseFloat(b.esikDeger) || 3));
       if (b.ayrilikEsigi != null) a.ayrilikEsigi = Math.max(0.3, Math.min(3, parseFloat(b.ayrilikEsigi) || 1.2));
@@ -1108,14 +1208,14 @@ async function api(req, res, url) {
       }
       commit(); return json(res, { ok: true, hatalar });
     }
-    if (rest === 'kolaylastirici/ekle') { // yeni kolaylaştırıcı: masadaki yöneticilere ek bir katılımcı
+    if (rest === 'kolaylastirici/ekle') { // yeni moderatör: masadaki katılımcılara ek bir katılımcı
       const m = S.masalar[b.masa]; if (!m) return hata(res, 400, 'Masa seçin.');
       const ad = metin(b.etiket, 60); if (!ad) return hata(res, 400, 'Ad soyad girin.');
       const k = katilimciEkle(m.id, ad, null, b.pozisyon); k.kolay = true;
       commit(); return json(res, { ok: true, kod: k.kod });
     }
-    if (rest === 'kolaylastirici/eksik-olustur') { // kolaylaştırıcısı olmayan her masaya geçici bir kolaylaştırıcı (deneme için)
-      let n = 0; for (const m of Object.values(S.masalar)) if (!atananlar(m.id).some(k => k.kolay)) { katilimciEkle(m.id, 'Kolaylaştırıcı ' + m.id).kolay = true; n++; }
+    if (rest === 'kolaylastirici/eksik-olustur') { // moderatörü olmayan her masaya geçici bir moderatör (deneme için)
+      let n = 0; for (const m of Object.values(S.masalar)) if (!masaUyeleri(m.id).some(k => k.kolay)) { katilimciEkle(m.id, 'Moderatör ' + m.id).kolay = true; n++; }
       commit(); return json(res, { ok: true, eklenen: n });
     }
     if (rest === 'katilimci/olustur') {
@@ -1152,11 +1252,11 @@ async function api(req, res, url) {
         if (kod.length < 3) { uyari.push('"' + parca[0] + '" geçerli bir ID değil (3-12 harf/rakam)'); continue; }
         if (masa && !S.masalar[masa]) uyari.push(kod + ': bilinmeyen masa "' + masa + '" (atamasız bırakıldı)');
         const varOlan = kodBul(kod), hedef = S.masalar[masa] ? masa : '';
-        const kol = /^(k|kolay|kolaylaştırıcı|kolaylastirici|1|evet)$/i.test(parca[4] || '');
+        const kol = /^(k|m|kolay|moderatör|moderator|moderatör|kolaylastirici|1|evet)$/i.test(parca[4] || '');
         if (varOlan) { if (kol) varOlan.kolay = true; varOlan.masa = hedef; if (parca[2]) varOlan.etiket = metin(parca[2], 60); if (parca[3]) varOlan.pozisyon = metin(parca[3], 60); guncellenen++; }
         else { const yk = katilimciEkle(hedef, parca[2] || (hedef ? hedef + '-' + kod : kod), kod, parca[3]); if (kol && yk) yk.kolay = true; eklenen++; }
       }
-      commit(); return json(res, { ok: true, eklenen, guncellenen, uyari });
+      moderatorTemizle(); commit(); return json(res, { ok: true, eklenen, guncellenen, uyari });
     }
     if ((mm = rest.match(/^katilimci\/(k[a-z0-9]+)$/))) {
       const k = S.katilimcilar[mm[1]]; if (!k) return hata(res, 404, 'Katılımcı yok.');
@@ -1165,7 +1265,7 @@ async function api(req, res, url) {
         if (b.masa != null) k.masa = S.masalar[b.masa] ? b.masa : '';
         if (b.etiket != null) k.etiket = metin(b.etiket, 60);
         if (b.pozisyon != null) k.pozisyon = metin(b.pozisyon, 60);
-        if (b.kolay != null) k.kolay = !!b.kolay;
+        if (b.kolay != null) { k.kolay = !!b.kolay; if (k.kolay) moderatorTemizle(); }
         if (b.kod != null) { const c = kodDuzelt(b.kod); if (c.length < 3) return hata(res, 400, 'ID en az 3 harf/rakam olmalı.'); const o = kodBul(c); if (o && o.id !== k.id) return hata(res, 409, 'Bu ID başka bir katılımcıda kullanılıyor.'); k.kod = c; }
         if (b.cihazSifirla) k.cihazlar = [];
       }
@@ -1185,7 +1285,7 @@ async function api(req, res, url) {
       for (const id of b.idler || []) { const k = S.katilimcilar[id]; if (k) k.masa = S.masalar[b.masa] ? b.masa : ''; }
       commit(); return json(res, { ok: true });
     }
-    if (rest === 'program') { // moderatör programı: metin ile değiştir, varsayılana dön veya gecikmeyi kaydır
+    if (rest === 'program') { // yönetici programı: metin ile değiştir, varsayılana dön veya gecikmeyi kaydır
       if (b.varsayilan) S.program = programVarsayilan();
       else if (b.metin != null) { const p = programParse(b.metin); if (p.hata.length) return hata(res, 400, p.hata.slice(0, 3).join(' | ')); if (!p.oge.length) return hata(res, 400, 'En az bir seans yazın.'); S.program = { oge: p.oge }; }
       else if (b.kaydir != null) {
@@ -1253,6 +1353,7 @@ async function api(req, res, url) {
     if (rest === 'sifirla') {
       if (b.kapsam === 'oy') { S.oylar = {}; for (const m of Object.values(S.masalar)) for (const t of ['G', 'Z']) { m.tur[t].durum = 'hazir'; m.tur[t].seansKapali = false; if (m.bulgular) m.bulgular[t] = null; m.etiket[t] = {}; } }
       else if (b.kapsam === 'puan') { S.puanlar = {}; S.sunum = bosDurum().sunum; }
+      else if (b.kapsam === 'icerik') { icerikSifirla(); S.asama = 'hazirlik'; puanZamanla(); }
       else if (b.kapsam === 'hepsi') { fs.writeFileSync(FILE + '.yedek-' + Date.now(), JSON.stringify(S)); const ay = S.ayar, pr = S.program; const hz = S.hazirlik; S = bosDurum(S.sablon); S.ayar = Object.assign(S.ayar, { baseUrl: ay.baseUrl }); S.program = pr; S.hazirlik = hz || {}; }
       else return hata(res, 400, 'Kapsam geçersiz.');
       commit(); return json(res, { ok: true });
@@ -1265,13 +1366,21 @@ async function api(req, res, url) {
           t.postit = 20 + crypto.randomInt(25); t.alan = t.postit; t.oy = oneriOy(t.postit); t.maxPer = oneriMaxPer(t.alan, t.oy); if (t.alan * t.maxPer < t.oy) t.maxPer = Math.ceil(t.oy / t.alan); t.durum = 'acik'; }
       } else if (b.tur === 'oy') {
         for (const m of Object.values(S.masalar)) for (const tur of ['G', 'Z']) if (m.tur[tur].durum === 'acik') rastgeleOy(m, tur, b.oran);
-      } else if (b.tur === 'bulgu-demo') { // kolaylaştırıcı eğitimi için geçici demo verisi
+      } else if (b.tur === 'bulgu-demo') { // moderatör eğitimi için geçici demo verisi
         const turlar = b.turKodu === 'Z' ? ['Z'] : b.turKodu === 'GZ' ? ['G', 'Z'] : ['G'];
         const hedef = b.masa ? [S.masalar[b.masa]].filter(Boolean) : Object.values(S.masalar);
         for (const m of hedef) for (const tur of turlar) demoBulgu(m, tur, b.seviye === 'tam');
-      } else if (b.tur === 'fikir-demo') { // kolaylaştırıcı eğitimi: fikir seçimi aşamasını istenen adıma getir
+      } else if (b.tur === 'fikir-demo') { // moderatör eğitimi: fikir seçimi aşamasını istenen adıma getir
         const hedef = b.masa ? [S.masalar[b.masa]].filter(Boolean) : Object.values(S.masalar);
         for (const m of hedef) { const h = demoFikir(m, ['giris', 'hazir', 'sunum', 'sonuc', 'onay', 'detay', 'gonderildi'].includes(b.adim) ? b.adim : 'giris'); if (h) return hata(res, 409, h); }
+      } else if (b.tur === 'dar-oy-uret') { darOyUret(!!b.esit);
+      } else if (b.tur === 'esit-swot') { for (const m of Object.values(S.masalar)) esitSwot(m, b.turKodu === 'Z' ? 'Z' : 'G');
+      } else if (b.tur === 'esit-fikir') { for (const m of Object.values(S.masalar)) esitFikir(m);
+      } else if (b.tur === 'swot-bitir') { for (const m of Object.values(S.masalar)) swotBitir(m, b.turKodu === 'Z' ? 'Z' : 'G');
+      } else if (b.tur === 'secim-tamamla') { for (const m of Object.values(S.masalar)) { if (masaFikirleri(m.id).length === 0 && atananlar(m.id).length < 2) continue; secimTamamla(m); }
+      } else if (b.tur === 'detay-doldur') { for (const m of Object.values(S.masalar)) if (secimOf(m.id).onay) detayDoldur(m);
+      } else if (b.tur === 'demo-hiz') { demoHiz(!!b.ac);
+      } else if (b.tur === 'demo-bitir') { icerikSifirla(); demoHiz(false); S.asama = 'hazirlik'; S.zaman = { etiket: '', bitis: 0, toplam: 0 }; puanZamanla();
       } else if (b.tur === 'bulgu-temizle') {
         const turlar = b.turKodu === 'Z' ? ['Z'] : b.turKodu === 'GZ' ? ['G', 'Z'] : ['G'];
         const hedef = b.masa ? [S.masalar[b.masa]].filter(Boolean) : Object.values(S.masalar);
@@ -1288,21 +1397,23 @@ async function api(req, res, url) {
         const me = 2 + (h % 30) / 12, mu = 2 + ((h * 7) % 30) / 12;
         S.puanlar[f.id] = S.puanlar[f.id] || {};
         for (const k of Object.values(S.katilimcilar)) {
-          if (S.puanlar[f.id][k.id]) continue; if (!S.ayar.kendiMasaPuan && f.masa === k.masa) continue; if (b.oran && Math.random() > b.oran) continue;
+          if (S.puanlar[f.id][k.id]) continue; if (k.kolay || !k.masa) continue; if (!S.ayar.kendiMasaPuan && f.masa === k.masa) continue; if (b.oran && Math.random() > b.oran) continue;
           const r = (m0) => Math.max(1, Math.min(5, Math.round(m0 + (Math.random() + Math.random() - 1) * 1.8)));
           S.puanlar[f.id][k.id] = { etki: r(me), uyg: r(mu), ts: Date.now() };
         }
       } else if (b.tur === 'tum-puan') { // tüm numaralı fikirler için puan üret (prova)
         for (const f of S.fikirler) { if (f.no == null) continue; let h = 0; for (const ch of f.id) h = (h * 31 + ch.charCodeAt(0)) % 1000;
           const me = 1.8 + (h % 33) / 11, mu = 1.8 + ((h * 7) % 33) / 11; S.puanlar[f.id] = S.puanlar[f.id] || {};
-          for (const k of Object.values(S.katilimcilar)) { if (S.puanlar[f.id][k.id]) continue; if (!S.ayar.kendiMasaPuan && f.masa === k.masa) continue;
+          for (const k of Object.values(S.katilimcilar)) { if (S.puanlar[f.id][k.id]) continue; if (k.kolay || !k.masa) continue; if (!S.ayar.kendiMasaPuan && f.masa === k.masa) continue;
             const r = (m0) => Math.max(1, Math.min(5, Math.round(m0 + (Math.random() + Math.random() - 1) * 1.8)));
             S.puanlar[f.id][k.id] = { etki: r(me), uyg: r(mu), ts: Date.now() }; } }
-      } else if (b.tur === 'bfikir') { // her katılımcıya örnek fikir yazdır
+      } else if (b.tur === 'bfikir') { // her katılımcıya örnek fikir yazdır; dayanağı (SWOT maddesi) olmayan mevcut demo fikirlerine de dayanak eklenir
+        let j = 0; for (const k of Object.values(S.katilimcilar)) { const f = S.bireyFikir[k.id]; j++; if (!f || !f.ad || (f.swot || []).length || !k.masa || k.kolay) continue; const dy = Object.keys(swotSecenek(S.masalar[k.masa])); if (dy.length) f.swot = [...new Set([dy[j % dy.length], dy[(j * 3 + 1) % dy.length]])]; }
         let i = 0; for (const k of Object.values(S.katilimcilar)) {
-          if (!k.masa || (S.bireyFikir[k.id] && S.bireyFikir[k.id].ad)) { i++; continue; }
+          if (!k.masa || (S.bireyFikir[k.id] && S.bireyFikir[k.id].ad) || k.kolay) { i++; continue; }
           if (secimOf(k.masa).durum !== 'hazir') continue;
-          S.bireyFikir[k.id] = { masa: k.masa, ad: ORNEK_FIKIRLER[(i * 7 + k.masa.length) % ORNEK_FIKIRLER.length] + ' (' + k.etiket + ')', ts: Date.now() + i }; i++;
+          const dy = Object.keys(swotSecenek(S.masalar[k.masa])); // her demo fikrine en az bir dayanak (SWOT maddesi) seçilir
+          S.bireyFikir[k.id] = { masa: k.masa, ad: ORNEK_FIKIRLER[(i * 7 + k.masa.length) % ORNEK_FIKIRLER.length], swot: dy.length ? [...new Set([dy[i % dy.length], dy[(i * 3 + 1) % dy.length]])] : [], ts: Date.now() + i }; i++;
         }
       } else if (b.tur === 'secim-puan') { // açık anında puan veya gözden geçirme için eksik puanları rastgele doldur
         for (const m of Object.values(S.masalar)) {
@@ -1318,7 +1429,7 @@ async function api(req, res, url) {
         }
       } else if (b.tur === 'secim-otomatik') { // tüm masalarda seçimi baştan sona tamamla (prova)
         for (const m of Object.values(S.masalar)) {
-          for (const k of atananlar(m.id)) if (!(S.bireyFikir[k.id] && S.bireyFikir[k.id].ad)) S.bireyFikir[k.id] = { masa: m.id, ad: ORNEK_FIKIRLER[crypto.randomInt(ORNEK_FIKIRLER.length)] + ' (' + k.etiket + ')', ts: Date.now() + crypto.randomInt(1000) };
+          { const dy = Object.keys(swotSecenek(m)); atananlar(m.id).forEach((k, i) => { if (!(S.bireyFikir[k.id] && S.bireyFikir[k.id].ad)) S.bireyFikir[k.id] = { masa: m.id, ad: ORNEK_FIKIRLER[(i * 7 + m.id.length) % ORNEK_FIKIRLER.length], swot: dy.length ? [dy[i % dy.length]] : [], ts: Date.now() + crypto.randomInt(1000) }; }); }
           secimIslem(m, { islem: 'yeniden' }); if (secimIslem(m, { islem: 'baslat' })) continue;
           const s = secimOf(m.id); const P = S.secimPuan[m.id];
           for (const fid of s.sira) {
@@ -1348,6 +1459,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 yukle();
+moderatorTemizle();
 puanZamanla();
 for (const id of Object.keys(S.secim)) secimZamanla(id);
 process.on('SIGINT', () => { persist(true); process.exit(0); });

@@ -29,7 +29,7 @@ function liste() {
 function satir(k) {
   const mas = V.masalar.map(m => `<option value="${esc(m.id)}" ${k.masa === m.id ? 'selected' : ''}>${esc(m.id)}</option>`).join('');
   const ek = k.yedek ? `<span class="badge off">Yedek ID</span> <button class="btn sm teal" data-a="ata" data-id="${k.id}">Kişiye ata</button>` : k.gelmeyecek ? `<span class="badge warn">Gelmeyecek</span> <button class="btn sm ghost" data-a="gelecek" data-id="${k.id}">Geri al</button>` : (!k.geldi ? `<button class="btn sm ghost" data-a="gelmeyecek" data-id="${k.id}">Gelmeyecek</button>` : '');
-  return `<div class="kp ${k.geldi ? 'geldi' : ''}"><div class="nm"><b>${esc(k.etiket)}</b>${k.kolay ? '<span class="kolaytag">Kolaylaştırıcı</span>' : ''}${k.pozisyon ? '<br><span class="muted">' + esc(k.pozisyon) + '</span>' : ''}</div>
+  return `<div class="kp ${k.geldi ? 'geldi' : ''}"><div class="nm"><b>${esc(k.etiket)}</b>${k.kolay ? '<span class="kolaytag">Moderatör</span>' : ''}${k.pozisyon ? '<br><span class="muted">' + esc(k.pozisyon) + '</span>' : ''}</div>
     <div class="id">${esc(k.kod)}</div>
     <select data-ch="masa" data-id="${k.id}" ${V.kapali ? 'disabled' : ''}><option value="">Masa —</option>${mas}</select>
     ${k.yedek || k.gelmeyecek ? '' : `<button class="btn ${k.geldi ? 'ghost' : 'teal'}" data-a="geldi" data-id="${k.id}" data-v="${k.geldi ? '0' : '1'}">${k.geldi ? '✓ Geldi (geri al)' : 'Geldi'}</button>`} ${ek}
@@ -42,7 +42,7 @@ function render() {
     .map(([id, ad, alt]) => `<div class="mchip ${filtre.masa === id ? 'on' : ''} ${alt && alt.includes('/') && alt.split('/')[0] === alt.split('/')[1] && alt.split('/')[1] !== '0' ? 'full' : ''}" data-a="mchip" data-v="${esc(id)}">${esc(ad)}${alt ? '<small>' + esc(alt) + '</small>' : ''}</div>`).join('');
   const mas = V.masalar.map(m => `<option value="${esc(m.id)}">${esc(m.id)} · ${esc(m.temaAd)}</option>`).join('');
   app.innerHTML = `<div class="kh"><div><div class="eyebrow">KÖK · Yönetici Çalıştayı</div><h1 class="serif">Kayıt masası</h1></div><span class="sp"></span>${V.kapali ? '<span class="badge warn">Kayıt kapandı: masa değişikliği yok</span>' : '<span class="badge ok">Kayıt açık</span>'}</div>
-    <div class="kc"><div class="box"><b>${g(yon)} / ${yon.length}</b><span>yönetici geldi</span></div><div class="box"><b>${g(kol)} / ${kol.length}</b><span>kolaylaştırıcı geldi</span></div></div>
+    <div class="kc"><div class="box"><b>${g(yon)} / ${yon.length}</b><span>katılımcı geldi</span></div><div class="box"><b>${g(kol)} / ${kol.length}</b><span>moderatör geldi</span></div></div>
     <div class="ktb"><input id="ara" placeholder="Ad, soyad, pozisyon veya ID ara…" value="${esc(filtre.ara)}" autocomplete="off"><select id="durum"><option value="">Tümü</option><option value="gelmedi" ${filtre.durum === 'gelmedi' ? 'selected' : ''}>Gelmedi</option><option value="geldi" ${filtre.durum === 'geldi' ? 'selected' : ''}>Geldi</option></select></div>
     <div class="mchips">${chips}</div>
     <div class="kadd">${V.kapali ? '' : `<button class="btn sm ghost" data-a="ekleac">${ekleAcik ? 'Yeni kişi formunu kapat' : '+ Listede olmayan kişi ekle'}</button>`}

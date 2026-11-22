@@ -21,14 +21,16 @@ function zamanBar() {
 }
 function ust(eb, cls) {
   const m = V.masa;
-  const rb = m && V.ben.kolay ? rolBar('kat', TOKEN, m.id) : '';
+  const rb = V.ben && V.ben.kolay ? rolBar('kat', TOKEN, m && m.id) + '<div class="saltbar">Salt okunur: katılımcıların gördüğü ekranı izliyorsunuz. Oy, fikir ve puan veremezsiniz.</div>' : '';
   return rb + `<div class="top"><span class="eyebrow ${cls || ''}">${eb}</span><span class="masachip" style="margin-left:auto">${m ? esc(m.ad) : 'Masa yok'}</span></div>` + zamanBar();
 }
-function ayarlaHtml(h) { if (h !== lastHtml) { lastHtml = h; app.innerHTML = h; } }
+function ayarlaHtml(h) { if (h !== lastHtml) { lastHtml = h; app.innerHTML = h; if (V && V.ben && V.ben.kolay) app.querySelectorAll('textarea,input').forEach(x => { x.readOnly = true; }); } }
 
 let bekleyenRender = false, lastTablo = false;
+const IZLE = new URLSearchParams(location.search).get('izle') === '1'; // moderatör: katılımcı ekranını yalnızca izler
 function render() {
   if (!V) return;
+  if (V.ben && V.ben.kolay && V.ben.masa && !IZLE) { location.replace('/masa/' + encodeURIComponent(V.ben.masa) + '?t=' + encodeURIComponent(TOKEN)); return; } // moderatör katılımcı değildir: yalnızca moderatör paneli
   const ae = document.activeElement;
   if (ae && (ae.tagName === 'TEXTAREA' || ae.tagName === 'INPUT') && app.contains(ae)) { bekleyenRender = true; return; }
   const m = V.masa;
@@ -68,7 +70,7 @@ function fikirDarEkrani() {
   let h = `<div style="--ac:var(--gold)">` + ust('Dar oylama · fikirler', 'teal');
   if (benim && !fdarDuz) return ayarlaHtml(h + `<div class="card" style="text-align:center"><div class="okc">✓</div><h2 class="big">Dar oyunuz alındı</h2><div class="row wrap-f" style="justify-content:center;gap:8px;margin:12px 0">${benim.map(id => { const f = d.adaylar.find(x => x.id === id); return `<span class="pill"><b class="serif" style="font-size:20px">${f ? f.no : '?'}</b></span>`; }).join('')}</div><p class="muted">Dar oylama kapanana kadar değiştirebilirsiniz.</p><button class="btn ghost" data-a="fdar-degistir">Oyumu değiştir</button></div></div>`);
   const uygun = d.uygun || [], hak = d.hak;
-  h += `<h1 class="big">Eşit puan: dar oylama</h1><p class="muted" style="margin:8px 0 0">Aşağıdaki fikirler <b class="goldl">tam aynı puanı</b> aldı. Masanın önerisi olarak <b class="goldl">${d.yer}</b> tanesi seçilecek. Daha çok istediğiniz <b class="goldl">${hak}</b> fikre dokunun (her fikre en çok 1 oy). Kendi fikriniz listede çıkmaz.</p><div style="margin-top:12px">`;
+  h += `<h1 class="big">Eşit puan: dar oylama</h1><p class="muted" style="margin:8px 0 0">Aşağıdaki fikirler <b class="goldl">aynı puanı</b> (ekranda aynı görünen puan) aldı. Masanın önerisi olarak <b class="goldl">${d.yer}</b> tanesi seçilecek. Daha çok istediğiniz <b class="goldl">${hak}</b> fikre dokunun (her fikre en çok 1 oy). Kendi fikriniz listede çıkmaz.</p><div style="margin-top:12px">`;
   for (const f of d.adaylar) { const kendi = !uygun.includes(f.id); h += `<div class="card flat ${fdarTaslak.includes(f.id) ? '' : ''}" data-a="${kendi ? '' : 'fdar-tile'}" data-id="${esc(f.id)}" style="margin-bottom:8px;display:flex;gap:12px;align-items:center;${fdarTaslak.includes(f.id) ? 'border:2px solid var(--gold)' : ''}${kendi ? ';opacity:.5' : ''}"><span class="serif" style="font-size:28px;font-weight:700;min-width:34px">${f.no}</span><span style="flex:1">${esc(f.ad)}${kendi ? ' <i class="muted">(sizin fikriniz)</i>' : ''}</span>${fdarTaslak.includes(f.id) ? '<span class="okc" style="margin:0">✓</span>' : ''}</div>`; }
   h += `</div><div class="dock"><div class="in"><div class="row" style="margin-bottom:10px"><div class="count"><b>${hak - fdarTaslak.length}</b><span class="muted">oy kaldı</span></div></div><button class="btn xl teal" data-a="fdar-gonder" ${fdarTaslak.length === hak ? '' : 'disabled'}>${fdarTaslak.length === hak ? 'Oylarımı gönder' : (hak - fdarTaslak.length) + ' oy daha kullanın'}</button></div></div></div>`;
   ayarlaHtml(h);
@@ -179,7 +181,7 @@ function sonucEkrani() {
 function beklemeEkrani() {
   const m = V.masa;
   const metin = { hazirlik: 'Çalıştay birazdan başlıyor. Bu ekranı açık bırakın; oylama başladığında otomatik değişecek.', guclu: m.tur.G.durum === 'bitti' ? 'Güçlü yönler oylaması tamamlandı.' : 'Güçlü yönler oylaması masanızda henüz açılmadı. Açıldığında bu ekran değişecek.',
-    zayif: m.tur.Z.durum === 'bitti' ? 'Zayıf yönler oylaması tamamlandı.' : 'Zayıf yönler oylaması masanızda henüz açılmadı. Açıldığında bu ekran değişecek.', fikir: (V.secim && V.secim.durum === 'bitti') ? (V.secim.onay ? 'Masanızın iki önerisi belli oldu. Şimdi bu öneriler sunuma hazırlanacak.' : 'Masanızın fikir sıralaması hazır. İlk ikisini kolaylaştırıcınız onaylayacak.') : 'Masalar proje fikirlerini yazıyor. Sunumlar başlayınca öneriler burada görünecek.', sunum: 'Bir sonraki öneri bekleniyor.', sonuc: 'Sonuçlar hazırlanıyor.' }[V.asama] || '';
+    zayif: m.tur.Z.durum === 'bitti' ? 'Zayıf yönler oylaması tamamlandı.' : 'Zayıf yönler oylaması masanızda henüz açılmadı. Açıldığında bu ekran değişecek.', fikir: (V.secim && V.secim.durum === 'bitti') ? (V.secim.onay ? 'Masanızın iki önerisi belli oldu. Şimdi bu öneriler sunuma hazırlanacak.' : 'Masanızın fikir sıralaması hazır. İlk ikisini moderatörünüz onaylayacak.') : 'Masalar proje fikirlerini yazıyor. Sunumlar başlayınca öneriler burada görünecek.', sunum: 'Bir sonraki öneri bekleniyor.', sonuc: 'Sonuçlar hazırlanıyor.' }[V.asama] || '';
   ayarlaHtml(`<div style="--ac:var(--gold)">` + ust('KÖK · Yönetici Çalıştayı') + `<div class="card"><div class="eyebrow">${esc(m.temaAd)}</div><h1 class="big" style="margin-top:8px">Hoş geldiniz</h1>
     <p class="muted">${esc(metin)}</p><div class="row" style="margin-top:6px"><span class="dot on"></span><span class="muted">Bağlısınız · ${esc(m.ad)}</span></div></div>${V.asama === 'sunum' ? siraKarti() : ''}${secimSonuc()}${temaBekle()}${temaBulgu('G')}${temaBulgu('Z')}</div>`);
 }
@@ -214,10 +216,10 @@ function temaBulgu(tur) { // temanın iki masasının (A ve B) bulguları tek li
     + satir.map(s => `<div class="res" style="align-items:flex-start"><span class="no" style="color:${renk};font-size:17px;min-width:64px">${esc(s.kod)}</span><div class="b" style="font-size:16px">${s.x.etiket ? esc(s.x.etiket) : '<span class="muted">Post-it ' + s.x.no + ' (içerik giriliyor…)</span>'}</div><span class="v muted" style="font-size:14px">${s.x.oy}</span></div>`).join('')
     + (bekleyen.length ? `<div class="muted" style="font-size:13px;margin-top:8px">${bekleyen.map(esc).join(', ')} masasının sonucu bekleniyor.</div>` : '') + '</div>';
 }
-function temaBekle() { // oylama kapandı ama kolaylaştırıcı henüz "Seansı kapat" demediyse bilgi ver
+function temaBekle() { // oylama kapandı ama moderatör henüz "Seansı kapat" demediyse bilgi ver
   const t = V.temaTablo, ben = t && t.masalar.find(x => x.id === V.masa.id); if (!ben) return '';
   const bekler = ['G', 'Z'].filter(k => V.masa.tur[k].durum === 'bitti' && !ben[k]).map(k => k === 'G' ? 'güçlü' : 'zayıf');
-  return bekler.length ? `<div class="card flat" style="--ac:var(--gold);margin-top:12px"><div class="muted">Oylama tamamlandı. Kolaylaştırıcınız ${bekler.join(' ve ')} yönlerin son halini kaydedince, temanızın iki masasının birleşik bulguları burada görünecek.</div></div>` : '';
+  return bekler.length ? `<div class="card flat" style="--ac:var(--gold);margin-top:12px"><div class="muted">Oylama tamamlandı. Moderatörünüz ${bekler.join(' ve ')} yönlerin son halini kaydedince, temanızın iki masasının birleşik bulguları burada görünecek.</div></div>` : '';
 }
 function temaTabloHtml() { return (temaBulgu('G') + temaBulgu('Z')) || '<div class="muted" style="margin-top:12px">Henüz sonuç yok.</div>'; }
 function fikirGiris() {
@@ -238,6 +240,9 @@ function fikirGiris() {
 }
 
 /* ------------------------------------------------- masa içi: anında puan */
+/* fikir kartında dayanak (SWOT maddeleri): her fikrin altında doğrudan, kod ve metniyle görünür */
+const dayanakKutu = f => ((f.swot || []).length ? swotMetinli(f.swotM || f.swot) : '');
+const dayanakTumu = () => '';
 function olcekHtml(id, sec, kapali) {
   const ad = ['', 'Desteklemem', 'Zayıf', 'Orta', 'İyi', 'Çok güçlü'];
   return `<div class="scale">${[1, 2, 3, 4, 5].map(i => `<div class="sc ${sec === i ? 'on' : ''}" ${kapali ? 'style="opacity:.4;pointer-events:none"' : ''} data-a="sp" data-f="${id}" data-v="${i}">${i}</div>`).join('')}</div><div class="anc"><span>1 desteklemem</span><span>5 çok güçlü destek</span></div>`;
@@ -245,11 +250,11 @@ function olcekHtml(id, sec, kapali) {
 function secimSunum() {
   const sc = V.secim, verilen = Object.keys(sc.benimPuanlar).length, gereken = sc.fikirler.filter(f => !f.benim).length;
   let h = `<div style="--ac:var(--gold)">` + ust('Fikir puanlama') + `<h1 class="big" style="font-size:26px">Dinledikçe puanlayın</h1>
-    <p class="muted" style="margin:6px 0 10px">Fikirler masada <b class="goldl">1 numaralıdan başlayarak sırayla</b> anlatılır. Dinledikçe her fikri 1 ile 5 arasında puanlayın; puanınızı kolaylaştırıcı puanlamayı bitirene kadar değiştirebilirsiniz.</p>
-    <div class="card flat" style="margin-bottom:12px"><div class="row"><span class="muted">Puanladığınız fikir</span><span class="sp"></span><b>${verilen} / ${gereken}</b></div><div class="bar" style="margin-top:8px"><i style="width:${gereken ? verilen / gereken * 100 : 0}%"></i></div></div>`;
+    <p class="muted" style="margin:6px 0 10px">Fikirler masada <b class="goldl">1 numaralıdan başlayarak sırayla</b> anlatılır. Dinledikçe her fikri 1 ile 5 arasında puanlayın; puanınızı moderatör puanlamayı bitirene kadar değiştirebilirsiniz.</p>
+    <div class="card flat" style="margin-bottom:12px"><div class="row"><span class="muted">Puanladığınız fikir</span><span class="sp"></span><b>${verilen} / ${gereken}</b></div><div class="bar" style="margin-top:8px"><i style="width:${gereken ? verilen / gereken * 100 : 0}%"></i></div></div>` + dayanakTumu(sc);
   for (const f of sc.fikirler) {
     const p = sc.benimPuanlar[f.id] || null;
-    h += `<div class="card flat" style="margin-bottom:10px;padding:12px"><div class="row" style="align-items:flex-start;gap:10px"><span class="serif" style="font-size:26px;font-weight:700;color:var(--gold);min-width:30px">${f.no}</span><div style="flex:1;font-weight:700">${esc(f.ad)}${f.benim && f.swotM ? swotMetinli(f.swotM) : swotChip(f.swot)}</div>${!f.benim && !p ? '<span class="badge pk">puan yok</span>' : ''}</div>
+    h += `<div class="card flat" style="margin-bottom:10px;padding:12px"><div class="row" style="align-items:flex-start;gap:10px"><span class="serif" style="font-size:26px;font-weight:700;color:var(--gold);min-width:30px">${f.no}</span><div style="flex:1;font-weight:700">${esc(f.ad)}</div>${!f.benim && !p ? '<span class="badge pk">puan yok</span>' : ''}</div>${dayanakKutu(f)}
       ${f.benim ? '<div class="muted" style="font-size:13px;margin-top:4px">Sizin fikriniz: puanı masadakiler verecek</div>' : `<div class="scale" style="gap:6px">${[1, 2, 3, 4, 5].map(i => `<div class="sc ${p === i ? 'on' : ''}" data-a="sp" data-f="${f.id}" data-v="${i}" style="font-size:22px">${i}</div>`).join('')}</div>`}</div>`;
   }
   ayarlaHtml(h + '<div class="muted" style="font-size:13px;margin:6px 0 40px">1 = desteklemem · 5 = çok güçlü destek</div></div>');
@@ -274,9 +279,10 @@ function gozdenEkrani() {
   const sc = V.secim, acik = sc.gozdenAcik;
   let h = `<div style="--ac:var(--gold)">` + ust('Gözden geçirme') + `<div class="row"><h1 class="big" style="font-size:26px">Puanlarınızı gözden geçirin</h1></div>
     <div class="row" style="margin:6px 0 12px"><span class="muted">Gerekirse değiştirin; puan vermediklerinizi şimdi puanlayın.</span><span class="sp"></span>${sc.gozdenKapanis ? `<span class="cd" id="cd2" data-t="${sc.gozdenKapanis}">--:--</span>` : ''}</div>`;
+  h += dayanakTumu(sc);
   for (const f of sc.fikirler) {
     const p = sc.benimPuanlar[f.id] || null;
-    h += `<div class="card flat" style="margin-bottom:10px;padding:12px"><div class="row" style="align-items:flex-start;gap:10px"><span class="no serif" style="font-size:26px;font-weight:700;color:var(--gold);min-width:30px">${f.no}</span><div style="flex:1;font-weight:700">${esc(f.ad)}</div>${!f.benim && !p ? '<span class="badge pk">puan yok</span>' : ''}</div>
+    h += `<div class="card flat" style="margin-bottom:10px;padding:12px"><div class="row" style="align-items:flex-start;gap:10px"><span class="no serif" style="font-size:26px;font-weight:700;color:var(--gold);min-width:30px">${f.no}</span><div style="flex:1;font-weight:700">${esc(f.ad)}</div>${!f.benim && !p ? '<span class="badge pk">puan yok</span>' : ''}</div>${dayanakKutu(f)}
       ${f.benim ? '<div class="muted" style="font-size:13px;margin-top:4px">Sizin fikriniz</div>' : `<div class="scale" style="gap:6px">${[1, 2, 3, 4, 5].map(i => `<div class="sc ${p === i ? 'on' : ''}" ${acik ? '' : 'style="opacity:.4;pointer-events:none"'} data-a="sp" data-f="${f.id}" data-v="${i}" style="font-size:22px">${i}</div>`).join('')}</div>`}</div>`;
   }
   ayarlaHtml(h + '</div>');
@@ -284,13 +290,14 @@ function gozdenEkrani() {
 function secimSonuc() {
   const sc = V.secim; if (!sc || sc.durum !== 'bitti' || !sc.sonuc) return '';
   return `<div class="card flat" style="--ac:var(--gold);margin-top:14px"><div class="eyebrow">Masanızın fikir sıralaması</div><div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.12)"><span>Sıra · Fikir</span><span>Ortalama puan</span></div><div style="margin-top:4px">${sc.sonuc.map((x, i) => `<div class="res"><span class="no" style="color:${i < 2 ? 'var(--gold)' : 'var(--muted)'}">${x.no}</span><div class="b" style="font-size:16px">${esc(x.ad)}${x.benim ? ' <span class="muted">(sizin)</span>' : ''}</div><span class="v" style="font-size:14px">${fmt(x.ort)}</span></div>`).join('')}</div>
-    <div class="muted" style="font-size:13px;margin-top:8px">${sc.onay ? 'İlk ikisi masanın önerisi olarak kaydedildi.' : 'İlk ikiyi kolaylaştırıcı onaylayacak.'}</div></div>`;
+    <div class="muted" style="font-size:13px;margin-top:8px">${sc.onay ? 'İlk ikisi masanın önerisi olarak kaydedildi.' : 'İlk ikiyi moderatör onaylayacak.'}</div></div>`;
 }
 
 /* ------------------------------------------------------------------ olaylar */
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-a]'); if (!el) return;
   const a = el.dataset.a;
+  if (V && V.ben && V.ben.kolay && a !== 'ftab') { toast('Moderatör bu ekranı yalnızca izler; oy, fikir ve puan veremez.', 1); return; }
   if (a === 'tile' || a === 'eksi') {
     e.stopPropagation();
     const tur = ['G', 'Z'].find(t => V.masa.tur[t].durum === 'acik'); if (!tur) return;

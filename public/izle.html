@@ -1,0 +1,44 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KÖK · Yan yana izleme</title>
+<style>
+html,body{margin:0;height:100%;background:#0b1530;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 12px;background:#101d42;border-bottom:1px solid #2a3a6a}
+.bar b{color:#f2c14e}.bar select,.bar button,.bar input{background:#1a2a5a;color:#fff;border:1px solid #3a4f8a;border-radius:8px;padding:6px 10px;font-size:14px}
+.bar button.on{background:#f2c14e;color:#101d42;border-color:#f2c14e;font-weight:700}
+.wrap{display:flex;height:calc(100% - 50px)}
+iframe{border:0;height:100%;background:#0b1530}
+#sol{flex:1.35}#sag{flex:1;border-left:2px solid #2a3a6a}
+@media(max-width:900px){.wrap{flex-direction:column}#sag{border-left:0;border-top:2px solid #2a3a6a}}
+#pin{padding:30px;max-width:380px;margin:12vh auto}
+</style></head><body>
+<div id="ust" class="bar" style="display:none">
+  <b>Yan yana izleme</b>
+  <span>Masa:</span><select id="masa"></select>
+  <span id="kim" style="opacity:.75;font-size:13px"></span>
+</div>
+<div class="wrap" id="wrap" style="display:none"><iframe id="sol" title="Yönetici"></iframe><iframe id="sag" title="Moderatör"></iframe></div>
+<div id="pin" style="display:none"><h2>Yönetim PIN'i</h2><input id="pi" type="password" inputmode="numeric" style="width:100%;padding:12px;font-size:18px"><button id="gir" style="margin-top:12px;padding:10px 16px;font-size:16px">Giriş</button><div id="hata" style="color:#ff8fb5;margin-top:10px"></div></div>
+<script>
+let A = null, mod = 'k';
+const $ = s => document.querySelector(s);
+async function yukle() {
+  const pin = localStorage.getItem('kokPin') || '';
+  if (!pin) return $('#pin').style.display = 'block';
+  try { const r = await fetch('/api/admin/view', { headers: { 'x-pin': pin } }); if (!r.ok) throw 0; A = await r.json(); } catch (e) { localStorage.removeItem('kokPin'); $('#hata').textContent = 'PIN hatalı.'; return $('#pin').style.display = 'block'; }
+  $('#pin').style.display = 'none'; $('#ust').style.display = 'flex'; $('#wrap').style.display = 'flex';
+  const q = new URLSearchParams(location.search); const kol = A.katilimcilar.filter(k => k.kolay && k.masa);
+  $('#masa').innerHTML = kol.sort((a, b) => a.masa.localeCompare(b.masa)).map(k => `<option value="${k.masa}">${k.masa} · ${k.etiket}</option>`).join('');
+  if (q.get('m')) $('#masa').value = q.get('m').toUpperCase();
+  $('#sol').src = '/yonetim#demo'; ciz();
+}
+function ciz() {
+  const m = $('#masa').value, k = A.katilimcilar.find(x => x.kolay && x.masa === m); if (!k) return;
+  $('#kim').textContent = k.etiket + ' (' + k.pozisyon + ')';
+  $('#sag').src = '/masa/' + m + '?t=' + k.token;
+  history.replaceState(null, '', '/izle?m=' + m);
+}
+$('#masa').onchange = ciz; 
+$('#gir').onclick = () => { localStorage.setItem('kokPin', $('#pi').value.trim()); yukle(); };
+$('#pi').addEventListener('keydown', e => { if (e.key === 'Enter') $('#gir').click(); });
+yukle();
+</script></body></html>

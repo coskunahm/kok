@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* Test ortamı: SAHTE verili, geçici ve izole bir sunucu başlatır. Gerçek verilere (data/, data_deneme/) ve 3000/3001 portlarındaki sunuculara dokunmaz.
  *
- *   node tools/test_ortami.js                      (boş çalıştay: 14 masa, masa başı 9 kişi + 1 kolaylaştırıcı)
+ *   node tools/test_ortami.js                      (boş çalıştay: 14 masa, masa başı 9 kişi + 1 moderatör)
  *   node tools/test_ortami.js --asama=genel-kurul  (28 öneri hazır, genel kurul 1. öneride)
  *   node tools/test_ortami.js --port=3300 --asama=sonuc
  *
@@ -48,7 +48,7 @@ Perde           : ${B}/ekran
 Menü            : ${B}/menu
 Katılım (ana)   : ${B}/            (ID girilir)
 Katılımcı       : ${kat ? kat.etiket + '  ID ' + kat.kod + '  ' + B + '/p/' + kat.token : '-'}
-Kolaylaştırıcı  : ${kol ? kol.etiket + '  ID ' + kol.kod + '  ' + B + '/masa/1A?t=' + kol.token : '-'}
+Moderatör  : ${kol ? kol.etiket + '  ID ' + kol.kod + '  ' + B + '/masa/1A?t=' + kol.token : '-'}
 Masa 1A (anahtar): ${B}/masa/1A?k=${mk('1A')}
 Toplam katılımcı: ${v.katilimcilar.length}  ·  masa: ${v.masalar.length}
 ------------------------------------------------------------------------------------------------`);
