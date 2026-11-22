@@ -37,7 +37,7 @@ const git = async () => {
     $('#masa').textContent = r.masa ? r.masaAd : 'Henüz atanmadı';
     $('#tema').textContent = r.masa ? r.temaAd : 'Yönetim ekibi sizi bir masaya atadığında ekranınız otomatik değişecek.';
     if (ROL_K && !r.kolay) { toast('Bu ID moderatör olarak tanımlı değil. Yönetim ekibine başvurun.', 1); return; }
-    $('#kolay').classList.toggle('hide', !(r.kolay && r.masa)); if (ROL_K && r.kolay && r.masa) { kaydet(TOKEN); location.href = '/masa/' + r.masa + '?t=' + TOKEN; return; }
+    $('#kolay').classList.toggle('hide', !(r.kolay && r.masa)); $('#devam').classList.toggle('hide', !!(r.kolay && r.masa)); // moderatör katılımcı değildir: yalnızca Moderatör paneli düğmesi if (ROL_K && r.kolay && r.masa) { kaydet(TOKEN); location.href = '/masa/' + r.masa + '?t=' + TOKEN; return; }
     $('#adim1').classList.add('hide'); $('#adim2').classList.remove('hide'); $('#acik').classList.add('hide');
   } catch (e) { toast(e.message, 1); }
 };
