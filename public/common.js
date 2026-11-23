@@ -134,3 +134,9 @@ function matrisAciklama(mt) { // ◆ notu yalnızca görüş ayrılığı yükse
   const ayr = mt && mt.oge && mt.oge.some(o => o.ayrilik);
   return '<div class="muted" style="font-size:14px">Etki ve uygulanabilirlik ortalamalarıdır.' + (ayr ? ' ◆ puanlar çok farklı (fikir birliği yok).' : '') + ' Yüksek etkili ama zor öneriler elenmez. Bu sonuçlar katılımcı önceliğidir; nihai karar değildir.</div>';
 }
+
+function molaBar(mola, kolay) {
+  if (!mola) return '';
+  const hm = mola.bitis ? new Date(mola.bitis).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '';
+  return `<div class="molabar"><b>☕ ${esc(mola.baslik)}: şimdi molaya çıkabilirsiniz</b><span>${kolay ? 'Moderatörler de dahil herkes molaya çıkabilir. ' : ''}${hm ? 'Saat <b style="display:inline;font-size:inherit">' + hm + '</b>\'de yerinizde olun.' : 'Yönetici duyurana kadar ekranı açık tutun.'}</span></div>`;
+}

@@ -59,15 +59,27 @@ function render() {
   const a = document.activeElement;
   if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA') && app.contains(a) && Date.now() - lastInput < 8000) { setTimeout(render, 1500); return; }
   const m = V.masa, L = adimlar(), cur = L.find(x => !x.bitti) || null, ai = ASM.indexOf(V.asama);
-  let h = rolBar('mod', TOK, m.id) + zamanBar() + progSerit() + `<div class="mh"><div><div class="eyebrow">KÖK · Moderatör paneli</div><h1 class="serif" style="margin-top:6px">${esc(m.ad)}</h1><div class="goldl serif" style="font-style:italic;font-size:19px;margin-top:4px">${esc(m.temaAd)}</div></div><span class="sp"></span>
+  let h = rolBar('mod', TOK, m.id) + molaBar(V.mola, true) + zamanBar() + progSerit() + `<div class="mh"><div><div class="eyebrow">KÖK · Moderatör paneli</div><h1 class="serif" style="margin-top:6px">${esc(m.ad)}</h1><div class="goldl serif" style="font-style:italic;font-size:19px;margin-top:4px">${esc(m.temaAd)}</div></div><span class="sp"></span>
     <span class="pill" style="--ac:var(--teal)"><i></i>${V.bagli} / ${V.katilimci} katılımcı bağlı</span></div>` + serit(L, cur);
   if (!cur) h += sonKart();
   else if (ASM.indexOf(cur.asama) > ai && !devam.has(cur.id)) h += beklemeKart(cur);
   else h += karti(cur, true);
   const acik = L.filter(x => gor.has(x.id) && x !== cur);
   for (const x of acik) h += karti(x, false);
-  h += ozetListe(L, cur);
+  h += ozetListe(L, cur) + temaSwotKart();
   app.innerHTML = h + cikisAlt('a'); otoBoy();
+}
+function temaSwotKart() { // temanın iki masasının (ör. 1A + 1B) kaydedilmiş güçlü ve zayıf yön bulguları
+  const t = V.temaTablo; if (!t || !t.masalar.length) return '';
+  const blok = tur => {
+    const renk = tur === 'G' ? 'var(--teal)' : 'var(--pink)', ad = tur === 'G' ? 'Güçlü yönler' : 'Zayıf yönler', satir = [];
+    for (const x of t.masalar) for (const b of (x[tur] || [])) satir.push({ kod: x.id + tur + '-' + b.no, b, ben: x.id === V.masa.id });
+    satir.sort((p, q) => q.b.oy - p.b.oy);
+    const bek = t.masalar.filter(x => !x[tur]).map(x => x.id);
+    return `<div style="margin-top:12px"><div class="eyebrow" style="color:${renk}">${ad} · ${satir.length} bulgu</div>${bek.length ? `<div class="muted" style="font-size:13px;margin-top:4px">Henüz kapanmadı: ${bek.join(', ')}</div>` : ''}`
+      + satir.map(s => `<div class="fi" style="align-items:flex-start;gap:10px"><b style="color:${renk};min-width:62px">${esc(s.kod)}</b><span style="flex:1">${s.b.etiket ? esc(s.b.etiket) : '<span class="muted">içerik giriliyor…</span>'}</span><span class="muted">${s.b.oy} oy</span></div>`).join('') + '</div>';
+  };
+  return `<details data-det="temaswot" ${detAcik.has('temaswot') ? 'open' : ''} class="card flat" style="margin-top:14px;--ac:var(--blue)"><summary style="cursor:pointer"><span class="eyebrow blue">Temanın SWOT bulguları · ${t.masalar.map(x => esc(x.id)).join(' + ')}</span></summary>${blok('G')}${blok('Z')}</details>`;
 }
 const ASAMAAD = { guclu: 'Güçlü yan turu', zayif: 'Zayıf yan turu', fikir: 'Fikir geliştirme', sunum: 'Genel kurul', sonuc: 'Sonuç' };
 function serit(L, cur) { // grup grup ilerleme: ✓ tamam · ● şu an · ○ sırada
@@ -177,7 +189,7 @@ function darKutu(tur, bh) {
     <button class="btn" data-a="dar-ac" data-t="${tur}">Dar oylamayı başlat</button></div>`;
   const kisiler = d.oyVeren + ' / ' + d.atanan;
   if (d.durum === 'acik') return `<div class="card flat" style="margin-top:10px;--ac:var(--gold)"><div class="eyebrow">Dar oylama açık</div>
-    <div class="muted" style="font-size:14px;margin:4px 0">Aday post-it'ler: ${d.adaylar.map(ad).join(', ')} · kişi başı ${d.hak} oy · ${d.yer} kişi seçilecek</div>
+    <div class="muted" style="font-size:14px;margin:4px 0">Aday post-it'ler: ${d.adaylar.map(ad).join(', ')} · kişi başı ${d.hak} oy · ${d.yer} post-it seçilecek</div>
     <div class="row" style="margin:8px 0"><span class="serif" style="font-size:34px;font-weight:700">${d.oyVeren}</span><span class="muted"> / ${d.atanan} kişi oy verdi</span></div>
     ${(d.sayim || []).map(x => `<span class="pill" style="margin:2px">${ad(x.no)} · ${x.oy}</span>`).join('')}
     <div class="row wrap-f" style="margin-top:10px;gap:8px"><button class="btn" data-a="dar-kapat" data-t="${tur}">Dar oylamayı kapat ve say</button><button class="btn ghost" data-a="dar-iptal" data-t="${tur}">Vazgeç</button></div></div>`;
@@ -255,14 +267,14 @@ function fikirDarKutu(s) { // fikirlerde TAM eşit puan: önce masa çözsün, o
 function detayKart() { // 5 · öneri detayları: izleme (yazma işi katılımcı ekranından yapılır; burada yalnızca durum ve yazar yönetimi)
   const d = V.detay; if (!d) return '';
   let h = `<div class="card" style="--ac:var(--teal);margin-top:16px"><div class="row"><span class="eyebrow teal">Öneri detayı (sunum içeriği)</span><span class="sp"></span><span class="badge ${d.every(f => f.gonder) ? 'ok' : 'warn'}">${d.filter(f => f.gonder).length}/${d.length} gönderildi</span></div>
-    ${sureSatir([[/^Sunuma hazırlık/, 'Sunuma hazırlık']])}<p class="muted" style="margin:10px 0 0">Her öneriyi grupta <b class="goldl">bir kişi (yazar)</b> kendi telefonundan yazıp gönderir. Burada yalnızca izlersiniz. Yazarı katılımcılar kendileri seçer ("Yazmayı ben yapacağım"). Yazar ayrılırsa ya da çevrimdışı kalırsa "Yazarı serbest bırak"ı kullanın.</p>`;
+    ${sureSatir([[/^Sunuma hazırlık/, 'Sunuma hazırlık']])}<p class="muted" style="margin:10px 0 0">Her öneriyi grupta <b class="goldl">bir kişi (yazar)</b> kendi telefonundan yazıp gönderir; isterseniz iki öneriden birini ya da ikisini aşağıdan siz de yazabilirsiniz. Yazarı katılımcılar kendileri seçer ("Yazmayı ben yapacağım"). Yazar ayrılırsa ya da çevrimdışı kalırsa "Yazarı serbest bırak"ı kullanın.</p>`;
   const al = V.detayAlan || [];
   for (const f of d) {
     const dolu = al.filter(a => (f.alan[a.k] || '').trim()).length;
     h += `<div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1)"><div class="row" style="align-items:flex-start;gap:8px"><b style="flex:1">Öneri ${f.sira}: ${esc(f.ad)}</b>${f.gonder ? '<span class="badge ok">✓ gönderildi</span>' : '<span class="badge warn">taslak</span>'}</div>
       <div class="muted" style="font-size:14px;margin:6px 0">✍ Yazan: ${f.takim.length ? '<b>' + f.takim.map(esc).join(', ') + '</b>' : 'henüz kimse yazmıyor'} · Alanlar: <b>${dolu}/${al.length}</b> dolu</div>
       <div class="row wrap-f" style="gap:8px">${f.takim.length ? `<button class="btn sm ghost" data-a="dbirak" data-f="${esc(f.id)}">Yazarı serbest bırak</button>` : ''}${f.gonder ? `<button class="btn sm ghost" data-a="dac" data-f="${esc(f.id)}">Düzenlemeye aç</button>` : ''}</div>
-      <details class="dd" data-did="${esc(f.id)}" ${dacik.has(f.id) ? 'open' : ''} style="margin-top:8px"><summary style="cursor:pointer;font-size:14px" class="muted">Yazılanı göster (salt okunur)</summary>${al.map(a => { const t = (f.alan[a.k] || '').trim(); return `<div style="margin-top:8px"><div class="eyebrow" style="font-size:11px">${esc(a.ad)}</div><div style="${t ? '' : 'opacity:.5;font-style:italic'}">${t ? esc(t) : '(henüz yazılmadı)'}</div></div>`; }).join('')}</details></div>`;
+      <details class="dd" data-did="${esc(f.id)}" ${dacik.has(f.id) ? 'open' : ''} style="margin-top:8px"><summary style="cursor:pointer;font-size:14px" class="muted">${f.gonder ? 'Yazılanı göster' : 'Detayı yaz / düzenle (moderatör de yazabilir)'}</summary>${al.map(a => { const t = (f.alan[a.k] || '').trim(); return `<div style="margin-top:8px"><div class="eyebrow" style="font-size:11px">${esc(a.ad)}</div>` + (f.gonder ? `<div style="${t ? '' : 'opacity:.5;font-style:italic'}">${t ? esc(t) : '(yazılmadı)'}</div>` : `<textarea data-df="${esc(f.id)}|${a.k}" rows="2" maxlength="${a.max || 600}" style="width:100%" placeholder="${esc(a.ad)}">${esc(f.alan[a.k] || '')}</textarea>`) + '</div>'; }).join('')}${f.gonder ? '' : `<div class="row" style="margin-top:10px"><button class="btn sm" data-a="dgonder" data-f="${esc(f.id)}">Gönder</button></div>`}</details></div>`;
   }
   return h + '</div>';
 }

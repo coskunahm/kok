@@ -362,6 +362,7 @@ function puanZamanla() {
 
 /* ------------------------------------------------- masa içi fikir seçimi (anında puan) */
 function yeniSecim() { return { durum: 'hazir', tablo: false, sira: [], aktif: 0, puanAcik: false, puanKapanis: 0, gozdenKapanis: 0, sonuc: null, onay: null, dar: null }; }
+function molaGor() { const m = S.mola; if (!m || !m.ac) return null; return { baslik: m.baslik, bitis: m.bitis || 0 }; }
 function zamanGor() { const z = S.zaman || {}; return { etiket: z.etiket || '', bitis: z.bitis || 0, toplam: z.toplam || 0 }; }
 /* ------------------------------------------------------------ öneri detayları (sunum içeriği) */
 const DETAY_ALAN = [ // genel kurulda 2-3 dakikalık sunum için sade tutuldu; SWOT dayanağı fikir girişindeki seçimden otomatik gelir
@@ -462,15 +463,15 @@ function secimHesapla(masaId) {
     }
   }
   const liste = s.sira.map((id, i) => ({ id, no: i + 1, ad: (S.bireyFikir[id] || {}).ad || '', n: n[id], ort: n[id] ? ham[id] / n[id] : 0, z: n[id] ? zt[id] / n[id] : 0, bes: bes[id] }));
-  liste.sort((a, b) => b.z - a.z || b.bes - a.bes || b.n - a.n || a.no - b.no);
-  s.sonuc = { liste, yakin: liste.length >= 3 && Math.abs(liste[1].z - liste[2].z) < 0.05, ts: Date.now() };
+  liste.sort((a, b) => Math.round(b.ort * 10) - Math.round(a.ort * 10) || b.z - a.z || b.bes - a.bes || b.n - a.n || a.no - b.no); // sıralama ekranda görünen ortalamayla uyumlu (virgülden sonra 1 hane); eşitte z-skoru, sonra 5 sayısı
+  s.sonuc = { liste, yakin: liste.length >= 3 && Math.round(liste[1].ort * 10) === Math.round(liste[2].ort * 10), ts: Date.now() };
   return s.sonuc;
 }
 /* masanın önerisi olacak ilk K fikrin sınırında TAM AYNI puan (z) varsa: eşit kalan fikirler arasında dar oylama */
 function secimEsit(m) {
   const s = secimOf(m.id), L = s.sonuc && s.sonuc.liste, k = m.fikirSayisi; if (!L || L.length <= k) return null;
   const r1 = x => Math.round(x.ort * 10); // ekranda görünen puan (virgülden sonra ilk hane): katılımcılar aynı görüyorsa eşit sayılır (4,4 ile 4,4)
-  const yakin = (x, y) => Math.abs(x.z - y.z) < 1e-9 || r1(x) === r1(y);
+  const yakin = (x, y) => r1(x) === r1(y);
   if (!yakin(L[k - 1], L[k])) return null;
   const idx = L.map((x, i) => (yakin(x, L[k - 1]) || yakin(x, L[k])) ? i : -1).filter(i => i >= 0), bas = Math.min(...idx, k - 1), son = Math.max(...idx, k);
   const adaylar = L.slice(bas, son + 1), kesin = L.slice(0, bas);
@@ -616,7 +617,7 @@ function pView(k) {
   const f = aktifFikir();
   if (f) { const p = (S.puanlar[f.id] || {})[k.id]; v.benimPuan = p ? { etki: p.etki, uyg: p.uyg } : null; }
   v.benimSira = S.fikirler.filter(x => x.no != null && x.ad && x.masa === k.masa).map(x => x.no).sort((a, b) => a - b); // masamın önerilerinin genel kurul sırası
-  v.zaman = zamanGor();
+  v.zaman = zamanGor(); v.mola = molaGor();
   v.secim = m ? secimGor(m.id, k.id) : null;
   v.detay = m ? detayGor(m.id, k.id) : null; v.detayAlan = DETAY_ALAN;
   v.temaTablo = m ? temaTablo(m.tema) : null;
@@ -639,7 +640,8 @@ function masaView(m) {
   v.program = (S.program.oge || []).filter(x => x.b >= 510 && x.e <= 1050).map(x => ({ ad: x.ad, b: x.b, e: x.e })); // moderatör yalnızca seans adı ve saatlerini görür (yönetici notları değil)
   v.secim = masaSecimGor(m);
   v.detay = detayGor(m.id, null); v.detayAlan = DETAY_ALAN;
-  v.zaman = zamanGor();
+  v.zaman = zamanGor(); v.mola = molaGor();
+  v.temaTablo = temaTablo(m.tema); // temanın iki masasının kayıtlı SWOT bulguları (moderatör de görsün)
   v.kisiler = atananlar(m.id).map(k => ({ id: k.id, etiket: k.etiket, kolay: !!k.kolay, bagli: Date.now() - (seen[k.id] || 0) < 90000, oy: { G: oyVar(k, 'G'), Z: oyVar(k, 'Z') } })); // yalnızca oy kullanıp kullanmadığı; oyun içeriği değil
   return v;
 }
@@ -652,7 +654,7 @@ function ekranView(req) {
     secim: (() => { const g = secimGor(m.id, null); const olasi = g.toplam * (g.puanlayabilir || 0), top = Object.values(g.puanSay || {}).reduce((x, y) => x + y, 0); return { durum: g.durum, girilen: g.girilen, toplam: g.toplam, puanOran: olasi ? Math.min(1, top / olasi) : 0, onay: !!g.onay }; })() }));
   const toplam = Object.keys(S.katilimcilar).length;
   const bagli = Object.values(S.katilimcilar).filter(k => Date.now() - (seen[k.id] || 0) < 90000).length;
-  const v = { t: Date.now(), asama: S.asama, baseUrl: baseUrl(req), toplam, bagli, masalar, sunum: sunumGor(), sonucSlayt: S.ayar.sonucSlayt, acikKatilim: S.ayar.acikKatilim, zaman: zamanGor() };
+  const v = { t: Date.now(), asama: S.asama, baseUrl: baseUrl(req), toplam, bagli, masalar, sunum: sunumGor(), sonucSlayt: S.ayar.sonucSlayt, acikKatilim: S.ayar.acikKatilim, zaman: zamanGor(), mola: molaGor() };
   if (S.asama === 'sonuc') v.matris = matris();
   return v;
 }
@@ -674,7 +676,7 @@ function adminView(req) {
   const kat = Object.values(S.katilimcilar).map(k => ({ id: k.id, token: k.token, kod: k.kod, etiket: k.etiket, pozisyon: k.pozisyon || '', masa: k.masa, kolay: !!k.kolay, geldi: !!k.geldi, yedek: !!k.yedek, gelmeyecek: !!k.gelmeyecek, oy: { G: oyVar(k, 'G'), Z: oyVar(k, 'Z') },
     bagli: Date.now() - (seen[k.id] || 0) < 90000, cihaz: (k.cihazlar || []).length }));
   return { t: Date.now(), sablon: S.sablon, asama: S.asama, ayar: S.ayar, baseUrl: baseUrl(req), ips: lanIps(), port: PORT, temalar: TEMALAR,
-    zaman: zamanGor(), program: S.program,
+    zaman: zamanGor(), mola: molaGor(), program: S.program,
     detayDurum: detayDurum(), hazirlik: S.hazirlik || {}, pinVarsayilan: ['kok2026', '1234'].includes(ADMIN_PIN), kayitPinVarsayilan: KAYIT_PIN === 'kayit2026',
     secimler: Object.fromEntries(Object.values(S.masalar).map(m => [m.id, { durum: (S.secim[m.id] || {}).durum || 'hazir', fikir: masaFikirleri(m.id).length, onay: !!(S.secim[m.id] || {}).onay }])), demoHiz: !!S.demoHiz,
     masalar, katilimcilar: kat, fikirler: S.fikirler, sunum: sunumGor(), matris: matris(),
@@ -1299,6 +1301,11 @@ async function api(req, res, url) {
     if (rest === 'zaman') { // ortak geri sayım: sn = 0 ise durdurur
       const sn = clampInt(b.sn, 0, 7200, 0);
       S.zaman = sn > 0 ? { etiket: metin(b.etiket, 60), bitis: Date.now() + sn * 1000, toplam: sn } : { etiket: '', bitis: 0, toplam: 0 };
+      commit(); return json(res, { ok: true });
+    }
+    if (rest === 'mola') { // mola duyurusu: tüm telefonlarda ve perdede "şimdi molaya çıkabilirsiniz"; dk verilirse dönüş saati gösterilir
+      const dk = clampInt(b.dk, 0, 240, 0);
+      S.mola = b.ac === false ? null : { ac: true, baslik: metin(b.baslik, 40) || 'Mola', bitis: dk > 0 ? Date.now() + dk * 60000 : 0 };
       commit(); return json(res, { ok: true });
     }
     if (rest === 'toplu-secim') { // tüm masalarda tema tablosunu telefonlarda aç/kapat

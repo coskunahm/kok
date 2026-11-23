@@ -22,7 +22,7 @@ function zamanBar() {
 function ust(eb, cls) {
   const m = V.masa;
   const rb = V.ben && V.ben.kolay ? rolBar('kat', TOKEN, m && m.id) + '<div class="saltbar">Salt okunur: katılımcıların gördüğü ekranı izliyorsunuz. Oy, fikir ve puan veremezsiniz.</div>' : '';
-  return rb + `<div class="top"><span class="eyebrow ${cls || ''}">${eb}</span><span class="masachip" style="margin-left:auto">${m ? esc(m.ad) : 'Masa yok'}</span></div>` + zamanBar();
+  return rb + `<div class="top"><span class="eyebrow ${cls || ''}">${eb}</span><span class="masachip" style="margin-left:auto">${m ? esc(m.ad) : 'Masa yok'}</span></div>` + molaBar(V.mola, V.ben && V.ben.kolay) + zamanBar();
 }
 function ayarlaHtml(h) { if (h !== lastHtml) { lastHtml = h; app.innerHTML = h + cikisAlt('a'); if (V && V.ben && V.ben.kolay) app.querySelectorAll('textarea,input').forEach(x => { x.readOnly = true; }); } }
 

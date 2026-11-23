@@ -48,7 +48,7 @@ const foot = '<div class="foot">KÖK · Yönetici Çalıştayı</div>';
 function render() {
   if (!V) return;
   const f = { hazirlik, guclu: swot, zayif: swot, fikir, sunum, sonuc }[V.asama] || hazirlik;
-  app.innerHTML = f() + zamanPill() + foot; sigdir(); sigdirListe();
+  app.innerHTML = (V.mola ? molaBar(V.mola, true).replace('class="molabar"', 'class="molabar" style="font-size:1.6rem;margin:0 0 1rem"') : '') + f() + zamanPill() + foot; sigdir(); sigdirListe();
 }
 function hazirlik() {
   const url = V.baseUrl + '/katil';

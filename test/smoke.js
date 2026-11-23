@@ -194,7 +194,7 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
   const baskasi = r.j.secim.fikirler.find(f => !f.benim);
   r = await a('/api/p/' + diger.token + '/secim-puan', { fikirId: baskasi.id, puan: 2 }, false); t('puan sonradan değiştirilebilir', r.s === 200);
   r = await a('/api/masa/A/secim?k=' + keyA, { islem: 'hesapla' }, false); const sn = r.j.secim.sonuc;
-  t('sonuç hesaplandı, 5 fikir sıralı', r.s === 200 && sn.length === 5 && sn[0].z >= sn[1].z && sn[1].z >= sn[4].z);
+  t('sonuç hesaplandı, 5 fikir sıralı', r.s === 200 && sn.length === 5 && sn[0].ort >= sn[1].ort && sn[1].ort >= sn[4].ort);
   r = await a('/api/masa/A/secim?k=' + keyA, { islem: 'onayla', secilen: [sn[0].id, sn[1].id] }, false);
   v = (await a('/api/admin/view')).j;
   t('ilk 2 masa önerisi olarak kaydedildi', v.fikirler.filter(f => f.masa === 'A').length === 2 && v.fikirler.every(f => f.ad.startsWith('Deneme fikri')));
