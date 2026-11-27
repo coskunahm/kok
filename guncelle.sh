@@ -1,5 +1,5 @@
 #!/bin/sh
-# Sunucuda güncelleme: son kodu çekip yeniden derler. Veri (kok-veri birimi) korunur.
+# Sunucuda güncelleme: son kodu çekip yeniden derler. Veri (PostgreSQL, kok-pg birimi) korunur.
 set -e
 cd "$(dirname "$0")"
 git pull --ff-only

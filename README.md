@@ -1,13 +1,17 @@
 # KÖK Oylama Sistemi (prototip v0.1)
 
-Yönetici çalıştayında telefonla oylama ve puanlama. Bağımlılığı yoktur; yalnızca Node.js 18+ gerekir.
+Yönetici çalıştayında telefonla oylama ve puanlama. Node.js 20+ ve PostgreSQL (14+) gerekir; tek npm bağımlılığı `pg`.
 
 ## Çalıştırma
 
 ```
 cd KOK_Oylama_Sistemi
-ADMIN_PIN=1234 node server.js
+npm ci
+createdb kok      # PostgreSQL'de boş bir veritabanı
+DATABASE_URL=postgres://localhost:5432/kok ADMIN_PIN=1234 node server.js
 ```
+
+Tablolar açılışta kendiliğinden kurulur. Veritabanı boşsa ve `data/state.json` (eski sürümün dosyası) varsa bir kez içeri aktarılır.
 
 Sunucu bir bilgisayarda (salonda yerel sunucu) çalışır. Katılımcı telefonları aynı Wi-Fi ağına bağlı olmalıdır. Açılışta ağdaki adres yazılır (örn. `http://10.80.23.175:3000`). macOS güvenlik duvarı gelen bağlantı için izin isteyebilir. Adres yanlışsa Yönetim › Ayarlar'dan değiştirin; QR kodları bu adresi kullanır.
 
@@ -77,14 +81,14 @@ Katılımcıların aynı Wi-Fi'de olması gerekmez; gereken, telefonların sunuc
 ## Veri ve gizlilik
 
 - Katılımcılar yalnızca etiket (örn. koltuk) ve masa ile tanınır; isim gerekmez. Kimin oy kullanıp kullanmadığı yönetimde (SWOT aşaması › Oy durumu, tüm masalar) ve moderatör panelinde (yalnızca kendi masası) görünür; oyun içeriği kişiye bağlı gösterilmez. Puanlar kişiye bağlı gösterilmez; CSV çıktılarında kişi kimliği yoktur.
-- Veri `data/state.json` dosyasında tutulur. Çalıştay sonunda CSV alıp (Sonuç sekmesi) `data/` klasörünü silin.
+- Veri PostgreSQL'de tutulur (`DATABASE_URL`). Katılımcılar, oylar, puanlar, fikirler vb. ayrı tablolardadır; her değişiklik tek bir işlemde (transaction) yazılır ve yanıt ancak kayıt tamamlanınca döner. "İçeriği sıfırla" ve "Her şeyi sıfırla" öncesi durum `yedekler` tablosuna alınır. Çalıştay sonunda CSV alıp (Sonuç sekmesi) veritabanını silin (`dropdb kok`).
 - PIN'i `ADMIN_PIN` ortam değişkeniyle değiştirin. Prototip kapalı ağ için tasarlandı; internete açmayın.
 
 ## Prova
 
 **Moderatör eğitimi için demo SWOT verisi (geçici):** Yönetim › Ayarlar › Deneme araçları üstündeki kutuda masa ve tür seçilir. "Oylamaları üret" post-it sayısı ve oyları yazar, oylamayı kapatır; içeriği moderatör kendisi girer ve seansı kapatır. "Tam demo" içerikleri de ("1A masası - Güçlü Yön - Post-It #1") yazar ve seansı kapatır; tema tablosu hemen dolar. "Demo SWOT verisini temizle" seçilenleri sıfırlar.
 
-Yönetim › Ayarlar › Deneme araçları: sahte katılımcı, oylama, fikir ve puan üretir. Gerçek çalıştaydan önce "Her şeyi sıfırla" ile temizleyin. `npm test` arka uç duman testini çalıştırır; `node test/seed.js` görsel prova verisi üretir.
+Yönetim › Ayarlar › Deneme araçları: sahte katılımcı, oylama, fikir ve puan üretir. Gerçek çalıştaydan önce "Her şeyi sıfırla" ile temizleyin. `npm test` kalıcılık katmanı ve arka uç duman testini geçici bir PostgreSQL veritabanında çalıştırır (`TEST_DATABASE_URL`, varsayılan `postgres://localhost:5432/postgres`); `node test/seed.js` görsel prova verisi üretir.
 
 ## Henüz yapılmayanlar
 
@@ -104,4 +108,4 @@ Yönetim › Ayarlar › Deneme araçları: sahte katılımcı, oylama, fikir ve
 
 ## Test ortamı (sahte veri, izole)
 
-`npm run test:ortam` (ya da `node tools/test_ortami.js --asama=genel-kurul`) geçici veri klasörüyle, 3200 numaralı portta sahte verili bir sunucu başlatır; gerçek verilere ve 3000/3001 sunucularına dokunmaz. Ayrıntılı test planı için `GPT_TEST_BRIFI.md`.
+`npm run test:ortam` (ya da `node tools/test_ortami.js --asama=genel-kurul`) geçici bir PostgreSQL veritabanıyla, 3200 numaralı portta sahte verili bir sunucu başlatır (kapanınca veritabanı silinir); gerçek verilere ve 3000/3001 sunucularına dokunmaz. Ayrıntılı test planı için `GPT_TEST_BRIFI.md`.

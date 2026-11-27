@@ -1,6 +1,6 @@
 # KÖK Oylama Sistemi: Kendi Sunucunuzda Barındırma
 
-Uygulama tek bir Node.js sürecidir (bağımlılık yok). Veri tek bir klasörde (JSON) tutulur; veritabanı gerekmez. Aşağıdaki iki yoldan birini seçin. Önerilen: **Docker Compose** (HTTPS otomatik).
+Uygulama tek bir Node.js sürecidir; veri PostgreSQL'de tutulur (Docker Compose kurulumunda PostgreSQL de birlikte gelir). Aşağıdaki iki yoldan birini seçin. Önerilen: **Docker Compose** (HTTPS otomatik).
 
 ## 0. Önce karar verilecekler (BT ekibinizle)
 
@@ -27,19 +27,21 @@ Alan adı ve sunucu hazır değilse çalıştay günü için en kolay yol: sunuc
    ```
    cd /opt/kok
    cp .env.example .env
-   nano .env        # ALAN_ADI, ADMIN_PIN, KAYIT_PIN'i doldurun
+   nano .env        # ALAN_ADI, ADMIN_PIN, KAYIT_PIN, POSTGRES_PASSWORD'ü doldurun
    ```
    - `ADMIN_PIN` uzun olsun (en az 8 karakter). Varsayılan `kok2026` ile canlıya çıkmayın.
    - Kurum içi sertifikanız varsa ya da genel sertifika alınamıyorsa `.env` içine `TLS_AYARI=tls internal` ekleyin (telefonlar bu sertifikaya güvenmez; bu yüzden yalnızca kurum cihazlarında kök sertifika dağıtımı varsa kullanın). Mümkünse kurumun kendi geçerli sertifikasını kullanın.
 3. Başlatın:
    ```
    docker compose up -d --build
-   docker compose ps          # iki servis de "running" olmalı
+   docker compose ps          # üç servis de (db, app, caddy) "running" olmalı
    docker compose logs -f app # uygulama kaydı
    ```
 4. Tarayıcıdan `https://ALAN_ADI/yonetim` açın, PIN ile girin. QR ve bağlantı adresleri otomatik olarak `https://ALAN_ADI` olarak üretilir (`BASE_URL`). Yönetim › Ayarlar'dan da görebilirsiniz.
 
-Güncelleme: yeni dosyaları kopyalayıp `docker compose up -d --build`. Veri `kok-veri` birimindedir; güncellemede silinmez.
+Güncelleme: yeni dosyaları kopyalayıp `docker compose up -d --build`. Veri `kok-pg` birimindeki PostgreSQL'dedir; güncellemede silinmez.
+
+**Eski (JSON dosyalı) sürümden geçiş:** Eski kurulumun `kok-veri` birimi `/data`'ya bağlı kalır. Yeni sürüm ilk açılışta veritabanını boş bulursa `/data/state.json` dosyasını (bozuksa sağlam `.tmp`/`.onceki`/yedek kopyasını) bir kez içeri aktarır ve aktarılan içeriği `yedekler` tablosuna da yazar. Veritabanında çalıştay varsa dosyaya hiç bakılmaz. Aktarmadan sonra dosya artık kullanılmaz.
 
 ## 3. Çalıştay gününden önce kontrol listesi
 
@@ -52,11 +54,11 @@ Güncelleme: yeni dosyaları kopyalayıp `docker compose up -d --build`. Veri `k
 
 ## 4. Yedek ve geri dönüş
 
-Uygulama durumu `/data/state.json` dosyasına yazar (ayrıca her 30 saniyede `.onceki` kopyası alır). Gün içinde dışarıya yedek almak için:
+Her değişiklik PostgreSQL'e tek bir işlemde (transaction) yazılır; yanıt kayıt tamamlanınca döner. Sunucu çökse de onaylanmış hiçbir oy kaybolmaz. "İçeriği sıfırla" ve "Her şeyi sıfırla" öncesindeki durum `yedekler` tablosuna alınır. Gün içinde dışarıya yedek almak için:
 
 ```
-# veriyi bir klasöre kopyala
-docker compose cp app:/data ./yedek-$(date +%Y%m%d-%H%M)
+docker compose exec -T db pg_dump -U kok -Fc kok > yedek-$(date +%Y%m%d-%H%M).dump
+# geri yükleme: docker compose exec -T db pg_restore -U kok -d kok --clean < yedek-....dump
 ```
 
 Yönetim panelinde ayrıca CSV dışa aktarımları vardır (matris, puanlar, SWOT oyları, katılımcı listesi). Çalıştay sonunda bunları indirin.
@@ -66,16 +68,17 @@ Sunucu yeniden başlarsa ya da çökerse `restart: unless-stopped` sayesinde ken
 ## 5. Çalıştay sonrası
 
 1. CSV'leri indirin.
-2. Veriyi kalıcı silin: `docker compose down -v` (veri birimini de siler). Ya da yalnızca yönetimden "Her şeyi sıfırla".
+2. Veriyi kalıcı silin: `docker compose down -v` (veritabanı birimini de siler). Ya da yalnızca yönetimden "Her şeyi sıfırla" (sıfırlama öncesi durum `yedekler` tablosunda kalır; onu da silmek için `docker compose exec db psql -U kok -d kok -c 'TRUNCATE yedekler'`).
 3. Alan adı/sunucu geçici ise kapatın.
 
 ## 6. Docker olmadan (alternatif)
 
-Sunucuda Node.js 20 veya üzeri kuruluysa:
+Sunucuda Node.js 20 veya üzeri ve erişilebilir bir PostgreSQL (14+) varsa:
 
 ```
 cd /opt/kok
-ADMIN_PIN=... KAYIT_PIN=... BASE_URL=https://ALAN_ADI TRUST_PROXY=1 DATA_DIR=/var/lib/kok node server.js
+npm ci --omit=dev
+DATABASE_URL=postgres://kok:PAROLA@localhost:5432/kok ADMIN_PIN=... KAYIT_PIN=... BASE_URL=https://ALAN_ADI TRUST_PROXY=1 node server.js
 ```
 
 Önüne HTTPS veren bir ters vekil (Nginx/Caddy/kurumun yük dengeleyicisi) koyun. Ters vekilde **canlı güncelleme akışı** (`/api/events`, SSE) için tamponlamayı kapatın:
@@ -88,7 +91,7 @@ Systemd hizmeti örneği (`/etc/systemd/system/kok.service`):
 ```
 [Unit]
 Description=KOK Oylama
-After=network.target
+After=network.target postgresql.service
 [Service]
 WorkingDirectory=/opt/kok
 EnvironmentFile=/opt/kok/.env.sunucu
@@ -107,12 +110,15 @@ WantedBy=multi-user.target
 | `KAYIT_PIN` | Kayıt masası PIN'i | `kayit2026` (değiştirin) |
 | `BASE_URL` | QR ve bağlantılarda kullanılan adres | boş (otomatik) |
 | `TRUST_PROXY` | `1` ise gerçek istemci IP'si `X-Forwarded-For`'dan alınır (ters vekil arkasında şart). Site Cloudflare proxy'si arkasındaysa `cloudflare` yazın: IP, istemcinin sahteleyemediği `CF-Connecting-IP` başlığından alınır (sunucu yalnızca Cloudflare IP'lerine açık olmalı) | kapalı |
+| `DATABASE_URL` | PostgreSQL bağlantı adresi (zorunlu) | yok |
+| `PG_HAVUZ` | Uygulamanın açacağı en çok veritabanı bağlantısı | 10 |
 | `PORT` | Dinlenen port | 3000 |
-| `DATA_DIR` | Verinin yazıldığı klasör | `./data` |
+| `DATA_DIR` | Yalnızca eski sürümden geçiş: veritabanı boşsa buradaki `state.json` bir kez aktarılır | `./data` |
 
 ## 8. Güvenlik notları
 
 - Yönetim ve kayıt PIN'leri 10 dakikada en çok 15 hatalı denemeye izin verir (IP başına), sonra bloklanır.
 - Katılımcı ID girişi de hatalı denemelere karşı sınırlıdır.
 - Yönetim/kayıt sayfaları herkese açık adreste durur; yalnızca PIN korur. Mümkünse yönetim yolunu (`/yonetim`, `/kayit`) kurum ağı IP aralığıyla kısıtlayın (Caddy/Nginx ile) ve PIN'i uzun tutun.
-- Sunucuda yalnızca 80/443 açık olsun. Uygulama portu (3000) dışarı açılmaz (Docker kurulumunda zaten açılmaz).
+- Sunucuda yalnızca 80/443 açık olsun. Uygulama portu (3000) ve PostgreSQL (5432) dışarı açılmaz (Docker kurulumunda zaten açılmaz).
+- Aynı veritabanına bağlı birden çok uygulama kopyası güvenle çalışır: her yazma çalıştay satırını kilitler, kopyalar birbirinin değişikliğini PostgreSQL LISTEN/NOTIFY ile anında görür. Güncelleme sırasında eski ve yeni kopyanın kısa süre birlikte çalışması veri kaybına yol açmaz.

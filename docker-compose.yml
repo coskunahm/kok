@@ -1,15 +1,33 @@
-# KÖK Oylama Sistemi: uygulama + HTTPS (Caddy). Kullanım: .env.example'ı .env olarak kopyalayıp doldurun, sonra: docker compose up -d --build
+# KÖK Oylama Sistemi: uygulama + PostgreSQL + HTTPS (Caddy). Kullanım: .env.example'ı .env olarak kopyalayıp doldurun, sonra: docker compose up -d --build
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kok
+      POSTGRES_USER: kok
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env dosyasında tanımlı olmalı}
+    volumes:
+      - kok-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kok -d kok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   app:
     build: .
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
+      DATABASE_URL: postgres://kok:${POSTGRES_PASSWORD}@db:5432/kok
       ADMIN_PIN: ${ADMIN_PIN:?ADMIN_PIN .env dosyasında tanımlı olmalı}
       KAYIT_PIN: ${KAYIT_PIN:?KAYIT_PIN .env dosyasında tanımlı olmalı}
       BASE_URL: https://${ALAN_ADI:?ALAN_ADI .env dosyasında tanımlı olmalı}
       TRUST_PROXY: "1"
     volumes:
-      - kok-veri:/data
+      - kok-veri:/data   # yalnızca eski sürümden geçiş: veritabanı boşsa buradaki state.json bir kez aktarılır
     expose:
       - "3000"
   caddy:
@@ -27,6 +45,7 @@ services:
       - caddy-veri:/data
       - caddy-ayar:/config
 volumes:
+  kok-pg:
   kok-veri:
   caddy-veri:
   caddy-ayar:

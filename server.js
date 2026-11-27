@@ -1,14 +1,15 @@
 'use strict';
 /*
  * KÖK Yönetici Çalıştayı - Telefonla Oylama ve Puanlama Sistemi
- * Bağımlılık yok: yalnızca Node.js (18+) yerleşik modülleri.
- * Çalıştırma:  ADMIN_PIN=1234 node server.js
+ * Veri PostgreSQL'de tutulur (db.js). Tek bağımlılık: pg.
+ * Çalıştırma:  DATABASE_URL=postgres://kullanici:sifre@sunucu:5432/kok ADMIN_PIN=1234 node server.js
  */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
+const db = require('./db');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const SURUM = String(Date.now()); // sunucu her başladığında değişir; açık sayfalar kod değiştiyse kendini yeniler
@@ -16,6 +17,8 @@ const ADMIN_PIN = process.env.ADMIN_PIN || 'kok2026';
 const KAYIT_PIN = process.env.KAYIT_PIN || 'kayit2026'; // kayıt masası PIN'i (yalnızca kayıt ekranı)
 const CLOUDFLARE = /^cloudflare$/i.test(process.env.TRUST_PROXY || ''); // Cloudflare proxy arkasındaysa gerçek istemci IP'si CF-Connecting-IP'den alınır (istemci bunu sahteleyemez)
 const TRUST_PROXY = CLOUDFLARE || /^(1|true|evet)$/i.test(process.env.TRUST_PROXY || ''); // ters vekil (Caddy/Nginx) arkasındaysa gerçek istemci IP'si X-Forwarded-For'dan alınır
+const DATABASE_URL = process.env.DATABASE_URL || '';
+// Eski sürümden geçiş: veritabanı boşsa bu klasördeki state.json (ve yedekleri) bir kez içeri aktarılır
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DATA_DIR, 'state.json');
 const PUB = path.join(__dirname, 'public');
@@ -129,48 +132,104 @@ function bosDurum(sablon = 'ana') {
 }
 let S = bosDurum();
 function durumGecerli(j) { return j && typeof j === 'object' && j.masalar && typeof j.masalar === 'object' && j.katilimcilar && typeof j.katilimcilar === 'object'; }
-function yukle() { // ana dosya bozuksa sessizce boş başlamaz: sırayla geçici/önceki/yedek dosyalar denenir; hiçbiri yoksa açılış durur (üzerine boş yazılmaz)
-  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) { console.error('Veri klasörü açılamadı:', e.message); process.exit(1); }
-  if (!fs.existsSync(FILE)) { for (const ek of ['.tmp', '.onceki']) if (fs.existsSync(FILE + ek)) { try { if (durumGecerli(JSON.parse(fs.readFileSync(FILE + ek, 'utf8')))) { console.error('Ana durum dosyası yok; ' + ek + ' kullanılıyor.'); fs.copyFileSync(FILE + ek, FILE); break; } } catch (e) { /* sıradakini dene */ } } }
-  if (!fs.existsSync(FILE)) return; // ilk kurulum: boş çalıştay
-  const adaylar = [FILE]; try { for (const f of fs.readdirSync(DATA_DIR).filter(x => /^state\.json\.(tmp|onceki|yedek-.*)$/.test(x)).sort((x, y) => fs.statSync(path.join(DATA_DIR, y)).mtimeMs - fs.statSync(path.join(DATA_DIR, x)).mtimeMs)) adaylar.push(path.join(DATA_DIR, f)); } catch (e) { /* yut */ }
+function normallestir(j) { // eski kayıtlar bu sürümün varsayılanlarıyla tamamlanır
+  const s = Object.assign(bosDurum(j.sablon || 'ana'), j);
+  s.ayar = Object.assign(bosDurum().ayar, j.ayar || {});
+  for (const m of Object.values(s.masalar || {})) for (const k of ['G', 'Z']) if (m && m.tur && m.tur[k] && m.tur[k].durum === 'hazir') { m.tur[k].alan = m.tur[k].postit || 0; if (!m.tur[k].oy) m.tur[k].maxPer = 2; }
+  return s;
+}
+/* Eski sürümün durum dosyası: yalnızca veritabanı boşken bir kez okunur. Ana dosya bozuksa sessizce boş başlanmaz:
+   sırayla geçici/önceki/yedek dosyalar denenir; hiçbiri sağlam değilse açılış durur (veritabanına boş çalıştay yazılmaz). */
+function eskiDosyadanOku() {
+  const ana = fs.existsSync(FILE), adaylar = ana ? [FILE] : [];
+  try {
+    const desen = ana ? /^state\.json\.(tmp|onceki|yedek-.*)$/ : /^state\.json\.(tmp|onceki)$/;
+    if (fs.existsSync(DATA_DIR)) for (const f of fs.readdirSync(DATA_DIR).filter(x => desen.test(x)).sort((x, y) => fs.statSync(path.join(DATA_DIR, y)).mtimeMs - fs.statSync(path.join(DATA_DIR, x)).mtimeMs)) adaylar.push(path.join(DATA_DIR, f));
+  } catch (e) { /* yut */ }
   let ilkHata = null;
   for (const dosya of adaylar) {
     try {
       const j = JSON.parse(fs.readFileSync(dosya, 'utf8')); if (!durumGecerli(j)) throw new Error('geçersiz durum yapısı');
-      if (dosya !== FILE) { try { fs.copyFileSync(FILE, FILE + '.bozuk-' + Date.now()); } catch (e) { /* yut */ } console.error('UYARI: ana durum dosyası okunamadı (' + ilkHata + '); ' + path.basename(dosya) + ' ile devam ediliyor. Bozuk dosya ".bozuk-…" olarak saklandı.'); }
-      S = Object.assign(bosDurum(j.sablon || 'ana'), j);
-      S.ayar = Object.assign(bosDurum().ayar, j.ayar || {});
-      for (const m of Object.values(S.masalar || {})) for (const k of ['G', 'Z']) if (m.tur && m.tur[k] && m.tur[k].durum === 'hazir') { m.tur[k].alan = m.tur[k].postit || 0; if (!m.tur[k].oy) m.tur[k].maxPer = 2; }
-      return;
+      if (dosya !== FILE && ana) console.error('UYARI: ana durum dosyası okunamadı (' + ilkHata + '); ' + path.basename(dosya) + ' aktarılıyor.');
+      return { S: normallestir(j), ham: j, dosya };
     } catch (e) { if (dosya === FILE) ilkHata = e.message; }
   }
-  console.error('HATA: durum dosyası okunamadı ve sağlam bir yedek bulunamadı (' + ilkHata + '). Veri korunsun diye sunucu açılmadı. Dosya: ' + FILE);
+  if (!ana) return null; // eski dosya yok: boş çalıştayla başlanır
+  console.error('HATA: eski durum dosyası okunamadı ve sağlam bir yedek bulunamadı (' + ilkHata + '). Veri korunsun diye sunucu açılmadı. Dosya: ' + FILE);
   process.exit(1);
 }
-let persistT = null, persistIlk = 0, sonOnceki = 0;
-function yaz() {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    const tmp = FILE + '.tmp';
-    if (Date.now() - sonOnceki > 30000 && fs.existsSync(FILE)) { try { fs.copyFileSync(FILE, FILE + '.onceki'); sonOnceki = Date.now(); } catch (e) { /* yut */ } } // sağlam bir önceki sürüm (bozulmaya karşı)
-    fs.writeFileSync(tmp, JSON.stringify(S));
-    fs.renameSync(tmp, FILE);
-  } catch (e) { console.error('Kayıt hatası:', e.message); }
-}
-function persist(sync = false) { // değişiklikler birleştirilir ama diske yazma en geç ~1 sn gecikir (kesintisiz trafikte bile)
-  if (sync) { clearTimeout(persistT); persistT = null; persistIlk = 0; return yaz(); }
-  if (!persistIlk) persistIlk = Date.now();
-  clearTimeout(persistT);
-  persistT = setTimeout(() => { persistIlk = 0; persistT = null; yaz(); }, Math.max(0, Math.min(400, persistIlk + 1000 - Date.now())));
-}
 
+/* ------------------------------------------------ PostgreSQL: okuma ve yazma */
+let R = null;          // veritabanındaki son satırlar (S'nin kayıtlı hâli); yazmada fark bunlara göre hesaplanır
+let degisti = false;   // okuma isteği sırasında durum değiştiyse işaretlenir, ardından kaydedilir
+let okumada = false;   // okuma isteği işleniyor: kayıtlı durum (S) doğrudan değiştirilmez
+let bekleyenCihazlar = []; // okumada görülen yeni cihazlar: ayrı bir yazma işlemiyle kaydedilir
+let yedekler = [];     // işlem içinde alınan yedekler aynı işlemde yazılır
+let kuyruk = Promise.resolve();
+function sirala(fn) { const p = kuyruk.then(fn); kuyruk = p.catch(() => {}); return p; } // bu sunucuda aynı anda tek yazma/yeniden yükleme
+function commit() { degisti = true; } // değişiklik işareti: kalıcı yazma ve canlı yayın işlem bitince yapılır
+function yedekAl(neden) { yedekler.push({ neden, veri: JSON.stringify(S) }); }
+let zamanlayiciT = null;
+function zamanlayicilariKur() {
+  puanZamanla();
+  for (const id of Object.keys(secimTimers)) if (!S.secim || !S.secim[id]) clearTimeout(secimTimers[id]);
+  for (const id of Object.keys(S.secim || {})) secimZamanla(id);
+}
+function zamanlayicilariYenile() { clearTimeout(zamanlayiciT); zamanlayiciT = setTimeout(zamanlayicilariKur, 1000); } // işlem başarısızsa kayıtlı duruma göre yeniden kurulur (veritabanı yoksa saniyede bir dener)
+function durumuAl(d) { S = normallestir(d.S); R = d.R; zamanlayicilariKur(); }
+/**
+ * Yazma işlemi. fn, S'nin kopyası üzerinde senkron çalışır; değişen satırlar tek bir PostgreSQL işleminde
+ * (transaction) yazılır. Başarılı olursa kopya S olur; olmazsa S hiç değişmez (yarım kalmış değişiklik olmaz).
+ * Çalıştay satırı kilitlendiği (SELECT ... FOR UPDATE) için birden çok sunucu kopyası aynı veritabanında güvenle çalışır.
+ */
+function islem(fn) {
+  return sirala(async () => {
+    let c = null;
+    try {
+      c = await db.havuz().connect();
+      await c.query('BEGIN');
+      const dbV = await db.surumKilitle(c);
+      if (dbV === null) throw new Error('Veritabanında çalıştay kaydı yok.');
+      if (dbV !== S.v) durumuAl(await db.durumOku(c)); // başka bir kopya yazmış: önce en güncel hâl okunur
+      const onceki = S; let sonuc, yeni;
+      S = structuredClone(onceki); yedekler = [];
+      try { sonuc = fn(); yeni = S; } catch (e) { e.istekHatasi = true; throw e; } finally { S = onceki; }
+      const bekleyen = yedekler; yedekler = [];
+      const satirlar = db.satirlaraCevir(yeni), fark = db.farkHesapla(R, satirlar);
+      if (fark.adet || bekleyen.length) {
+        yeni.v = dbV + 1; const cal = satirlar.calistay.get('[1]'); cal.v = yeni.v; // yeni sürüm yalnızca çalıştay satırına işlenir
+        if (!fark.fark.some(f => f.t.ad === 'calistay')) { fark.fark.push({ t: db.TABLOLAR[0], sil: [], yaz: [cal] }); fark.adet++; }
+        for (const y of bekleyen) await db.yedekEkle(c, y.neden, y.veri);
+        await db.farkUygula(c, fark);
+        await db.bildir(c, yeni.v);
+      }
+      await c.query('COMMIT');
+      S = yeni; R = satirlar;
+      if (fark.adet) yayinla();
+      return sonuc;
+    } catch (e) {
+      if (c) await c.query('ROLLBACK').catch(() => {});
+      zamanlayicilariYenile();
+      throw e;
+    } finally { if (c) c.release(); }
+  });
+}
+/* Okumadan önce veritabanındaki sürüm denetlenir; başka bir kopya yazdıysa durum yeniden okunur.
+   Aynı anda gelen okumalar tek sorguyu paylaşır. */
+let tazeSoz = null;
+function tazeTut() {
+  if (!tazeSoz) tazeSoz = (async () => {
+    try {
+      if ((await db.surumOku()) === S.v) return;
+      await sirala(async () => { if ((await db.surumOku()) !== S.v) { const d = await db.durumOku(); if (d) { durumuAl(d); yayinla(); } } });
+    } finally { tazeSoz = null; }
+  })();
+  return tazeSoz;
+}
 /* ------------------------------------------------------------- canlı yayın */
 const clients = new Set();
 let bcastT = null;
-function commit() {
-  S.v++;
-  persist();
+function yayinla() {
   clearTimeout(bcastT);
   bcastT = setTimeout(() => {
     for (const r of clients) { try { r.write('event: v\ndata: ' + S.v + '\n\n'); } catch (e) { clients.delete(r); } }
@@ -188,13 +247,14 @@ function json(res, obj, kod = 200) {
   res.writeHead(kod, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
   res.end(b);
 }
-function body(req) {
+function govdeOku(req) { // PostgreSQL metinlerinde NUL karakteri olamaz: gelen metinlerden temizlenir
   return new Promise((ok, no) => {
     let d = ''; req.on('data', c => { d += c; if (d.length > 2e6) { no(new Error('çok büyük')); req.destroy(); } });
-    req.on('end', () => { try { ok(d ? JSON.parse(d) : {}); } catch (e) { no(e); } });
+    req.on('end', () => { try { ok(d ? JSON.parse(d, (k, v) => typeof v === 'string' ? v.replace(/\u0000/g, '') : v) : {}); } catch (e) { no(e); } });
     req.on('error', no);
   });
 }
+function body(req) { return req.govde || {}; } // gövde, işlem başlamadan önce okunur (yazma işlemi gövdeyi beklemez)
 function lanIps() {
   const out = [];
   for (const l of Object.values(os.networkInterfaces())) for (const a of l || [])
@@ -237,8 +297,22 @@ function cihazKontrol(k, req) {
   k.cihazlar = k.cihazlar || [];
   if (k.cihazlar.includes(c)) return null;
   if (S.ayar.cihazKilidi && k.cihazlar.length >= 1) return 'Bu katılım kimliği başka bir cihazda kullanılıyor. Lütfen masanızın moderatörüne başvurun.';
-  if (k.cihazlar.length < 5) { k.cihazlar.push(c); persist(); }
+  if (k.cihazlar.length < 5) {
+    if (okumada) bekleyenCihazlar.push({ id: k.id, c }); // okuma sırasında kayıtlı durum değiştirilmez; aynı anda süren bir yazma işlemi bu değişikliği ezerdi
+    else { k.cihazlar.push(c); commit(); }
+  }
   return null;
+}
+function cihazlariKaydet() { // okumada görülen cihazlar işlem içinde, en güncel durum üzerinde yeniden denetlenip eklenir
+  const liste = bekleyenCihazlar; bekleyenCihazlar = [];
+  islem(() => {
+    for (const { id, c } of liste) {
+      const k = S.katilimcilar[id]; if (!k) continue;
+      k.cihazlar = k.cihazlar || [];
+      if (k.cihazlar.includes(c) || k.cihazlar.length >= 5 || (S.ayar.cihazKilidi && k.cihazlar.length >= 1)) continue;
+      k.cihazlar.push(c); commit();
+    }
+  }).catch(e => console.error('Cihaz kaydı yapılamadı:', e.message));
 }
 /* kimlik denemelerinde kaba kuvvet sınırı: IP başına 10 dakikada en fazla 20 hatalı deneme */
 const denemeler = {};
@@ -345,19 +419,19 @@ function puanZamanla() {
   const s = S.sunum;
   if (s.durum === 'sunum' && s.sunumBas && S.ayar.otoPuan !== false) { // sunum süresi dolunca puanlama kendiliğinden açılır ("Puanlamayı aç" düğmesiyle daha erken de açılabilir)
     const w = Math.max(0, s.sunumBas + s.sunumSn * 1000 - Date.now());
-    puanTimer = setTimeout(() => {
+    puanTimer = setTimeout(() => islem(() => {
       const x = S.sunum;
       if (x.durum === 'sunum' && Date.now() >= x.sunumBas + x.sunumSn * 1000 - 50) { x.durum = 'puan'; x.puanSn = S.ayar.puanSn; x.puanKapanis = x.puanSn > 0 ? Date.now() + x.puanSn * 1000 : 0; commit(); puanZamanla(); } else puanZamanla();
-    }, w + 30);
+    }).catch(e => console.error('Zamanlayıcı kaydedilemedi:', e.message)), w + 30);
     return;
   }
   if (s.durum === 'puan' && s.puanKapanis && S.ayar.otoKapat) {
     const w = Math.max(0, s.puanKapanis - Date.now());
-    puanTimer = setTimeout(() => {
+    puanTimer = setTimeout(() => islem(() => {
       if (S.sunum.durum === 'puan' && S.sunum.puanKapanis && Date.now() >= S.sunum.puanKapanis - 50) {
         S.sunum.durum = 'kapali'; commit();
       } else puanZamanla();
-    }, w + 30);
+    }).catch(e => console.error('Zamanlayıcı kaydedilemedi:', e.message)), w + 30);
   }
 }
 
@@ -437,10 +511,10 @@ function secimZamanla(masaId) {
   const s = S.secim[masaId]; if (!s) return;
   if (s.durum === 'sunum' && s.puanAcik && s.puanKapanis && S.ayar.otoKapat) {
     const w = Math.max(0, s.puanKapanis - Date.now());
-    secimTimers[masaId] = setTimeout(() => {
+    secimTimers[masaId] = setTimeout(() => islem(() => {
       const x = S.secim[masaId];
       if (x && x.puanAcik && x.puanKapanis && Date.now() >= x.puanKapanis - 50) { x.puanAcik = false; commit(); } else secimZamanla(masaId);
-    }, w + 30);
+    }).catch(e => console.error('Zamanlayıcı kaydedilemedi:', e.message)), w + 30);
   }
 }
 function secimPuanKabul(s, fikirId) {
@@ -783,7 +857,7 @@ function demoHiz(ac) { // genel kurulu kısa sürelerle denemek için; kapatıl�
   else if (S.demoHiz) { Object.assign(S.ayar, S.demoHiz); S.demoHiz = null; }
 }
 function icerikSifirla() { // oylar, fikirler, puanlar, sunum, süreç durumu silinir; katılımcılar, masa bağlantıları, ayarlar, program ve hazırlık listesi kalır
-  try { fs.writeFileSync(FILE + '.yedek-' + Date.now(), JSON.stringify(S)); } catch (e) { /* yedek alınamadıysa da devam */ }
+  yedekAl('icerik-sifirla');
   const eski = S, yeni = bosDurum(eski.sablon);
   yeni.ayar = eski.ayar; yeni.program = eski.program; yeni.hazirlik = eski.hazirlik || {}; yeni.katilimcilar = eski.katilimcilar; yeni.demoHiz = eski.demoHiz || null;
   yeni.masalar = {}; for (const m of Object.values(eski.masalar)) { const n = yeniMasa(m.id, m.tema, m.ad); n.key = m.key; n.fikirSayisi = m.fikirSayisi; yeni.masalar[m.id] = n; }
@@ -973,7 +1047,7 @@ function masaYetki(req, m, url) {
   return false;
 }
 
-async function api(req, res, url) {
+function api(req, res, url) { // senkron: yazma isteklerinde islem() içinde, S'nin kopyası üzerinde çalışır
   const p = url.pathname, M = req.method;
   let mm;
   if (p === '/api/events') {
@@ -994,7 +1068,7 @@ async function api(req, res, url) {
   if (p === '/api/masalar-liste' && M === 'GET') return json(res, { acik: S.ayar.acikKatilim, masalar: Object.values(S.masalar).map(m => ({ id: m.id, ad: m.ad, tema: temaAd(m.tema) })) });
   if (p === '/api/katil' && M === 'POST') {
     if (!S.ayar.acikKatilim) return hata(res, 403, 'Açık katılım kapalı. Lütfen yaka kartınızdaki QR kodu kullanın.');
-    const b = await body(req); const m = S.masalar[b.masa]; if (!m) return hata(res, 400, 'Masa seçin.');
+    const b = body(req); const m = S.masalar[b.masa]; if (!m) return hata(res, 400, 'Masa seçin.');
     const k = katilimciEkle(m.id, 'Kayıtsız'); commit(); return json(res, { token: k.token });
   }
   if ((mm = p.match(/^\/api\/tema\/([1-7])$/)) && M === 'GET') return json(res, temaTablo(parseInt(mm[1], 10)));
@@ -1007,7 +1081,7 @@ async function api(req, res, url) {
     if (mm[2] === 'fikir' && M === 'POST') {
       const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
       if (secimOf(m.id).durum !== 'hazir') return hata(res, 409, 'Fikir girişi kapandı. Sunumlar başladı.');
-      const b = await body(req); const ad = metin(b.ad, 110), onceki = S.bireyFikir[k.id], secenek = swotSecenek(m);
+      const b = body(req); const ad = metin(b.ad, 110), onceki = S.bireyFikir[k.id], secenek = swotSecenek(m);
       let swot = onceki && onceki.masa === m.id ? (onceki.swot || []) : [];
       if (Array.isArray(b.swot)) swot = [...new Set(b.swot.map(x => String(x)))].filter(x => Object.prototype.hasOwnProperty.call(secenek, x)).slice(0, 3);
       if (ad && !swot.length && Object.keys(secenek).length) return hata(res, 400, 'Fikrinizin dayandığı en az bir SWOT maddesini seçin.');
@@ -1016,12 +1090,12 @@ async function api(req, res, url) {
     }
     if (mm[2] === 'detay' && M === 'POST') {
       const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
-      const h = detayIslem(m, k, await body(req), false); if (h) return hata(res, 409, h);
+      const h = detayIslem(m, k, body(req), false); if (h) return hata(res, 409, h);
       commit(); return json(res, { ok: true });
     }
     if (mm[2] === 'secim-puan' && M === 'POST') {
       const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
-      const b = await body(req), s = secimOf(m.id);
+      const b = body(req), s = secimOf(m.id);
       if (!secimPuanKabul(s, b.fikirId)) return hata(res, 409, 'Puanlama şu an açık değil.');
       if (b.fikirId === k.id) return hata(res, 403, 'Kendi fikrinize puan veremezsiniz.');
       const p = parseInt(b.puan, 10); if (!(p >= 1 && p <= 5)) return hata(res, 400, 'Puan 1 ile 5 arasında olmalı.');
@@ -1029,7 +1103,7 @@ async function api(req, res, url) {
       commit(); return json(res, { ok: true });
     }
     if (mm[2] === 'dar-oy' && M === 'POST') { // eşitlik için dar oylama oyu
-      const b = await body(req); const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
+      const b = body(req); const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
       if (b.tur === 'F') {
         const sd = secimOf(m.id).dar; if (!sd || sd.durum !== 'acik') return hata(res, 409, 'Dar oylama şu an açık değil.');
         const uygun = sd.adaylar.filter(id => id !== k.id), hak = Math.min(sd.hak, uygun.length), ids = [...new Set((Array.isArray(b.nos) ? b.nos : []).map(String))];
@@ -1047,7 +1121,7 @@ async function api(req, res, url) {
       d.oylar[k.id] = nos; commit(); return json(res, { ok: true });
     }
     if (mm[2] === 'oy' && M === 'POST') {
-      const b = await body(req); const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
+      const b = body(req); const m = S.masalar[k.masa]; if (!m) return hata(res, 400, 'Henüz bir masaya atanmadınız.');
       const tur = b.tur === 'Z' ? 'Z' : 'G'; const t = m.tur[tur];
       if (t.durum !== 'acik') return hata(res, 409, 'Oylama şu an açık değil.');
       const alloc = {}; let top = 0;
@@ -1065,7 +1139,7 @@ async function api(req, res, url) {
       commit(); return json(res, { ok: true });
     }
     if (mm[2] === 'puan' && M === 'POST') {
-      const b = await body(req); const f = aktifFikir();
+      const b = body(req); const f = aktifFikir();
       if (S.sunum.durum !== 'puan' || !f || f.id !== b.fikirId) return hata(res, 409, 'Puanlama şu an açık değil.');
       if (!S.ayar.kendiMasaPuan && f.masa === k.masa) return hata(res, 403, 'Kendi masanızın önerisini puanlayamazsınız.');
       const e = parseInt(b.etki, 10), u = parseInt(b.uyg, 10);
@@ -1081,7 +1155,7 @@ async function api(req, res, url) {
   if (p.startsWith('/api/kayit/')) {
     if (!(yonetici(req) || (req.headers['x-kayit-pin'] || '') === KAYIT_PIN)) return hata(res, 401, 'Kayıt PIN\'i hatalı.');
     if (p === '/api/kayit/view' && M === 'GET') return json(res, kayitView());
-    const b = await body(req);
+    const b = body(req);
     if (p === '/api/kayit/ekle' && M === 'POST') {
       if (S.ayar.kayitKapali) return hata(res, 409, 'Kayıt kapandı; yeni kişiyi yönetim ekibi ekler.');
       const m = S.masalar[b.masa]; if (!m) return hata(res, 400, 'Masa seçin.');
@@ -1110,7 +1184,7 @@ async function api(req, res, url) {
     const m = S.masalar[mm[1]]; if (!m) return hata(res, 404, 'Masa yok.');
     if (!masaYetki(req, m, url)) return hata(res, 401, 'Yetkisiz: masa bağlantısı hatalı.');
     if (mm[2] === 'view' && M === 'GET') return json(res, masaView(m));
-    const b = await body(req);
+    const b = body(req);
     if (mm[2] === 'cihaz' && M === 'POST') { // katılımcı telefonunu değiştirdiyse cihaz kaydını sıfırla
       const k = S.katilimcilar[b.id]; if (!k || k.masa !== m.id) return hata(res, 404, 'Katılımcı bu masada değil.');
       k.cihazlar = []; commit(); return json(res, masaView(m));
@@ -1160,7 +1234,7 @@ async function api(req, res, url) {
       res.writeHead(200, { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="kok_' + ad + '"' }); return res.end(c);
     }
     if (M !== 'POST') return hata(res, 405, 'yöntem');
-    const b = await body(req);
+    const b = body(req);
     if (rest === 'ayar') {
       const a = S.ayar;
       if (b.baseUrl != null) a.baseUrl = metin(b.baseUrl, 120);
@@ -1363,7 +1437,7 @@ async function api(req, res, url) {
       if (b.kapsam === 'oy') { S.oylar = {}; for (const m of Object.values(S.masalar)) for (const t of ['G', 'Z']) { m.tur[t].durum = 'hazir'; m.tur[t].seansKapali = false; if (m.bulgular) m.bulgular[t] = null; m.etiket[t] = {}; } }
       else if (b.kapsam === 'puan') { S.puanlar = {}; S.sunum = bosDurum().sunum; }
       else if (b.kapsam === 'icerik') { icerikSifirla(); S.asama = 'hazirlik'; puanZamanla(); }
-      else if (b.kapsam === 'hepsi') { fs.writeFileSync(FILE + '.yedek-' + Date.now(), JSON.stringify(S)); const ay = S.ayar, pr = S.program; const hz = S.hazirlik; S = bosDurum(S.sablon); S.ayar = Object.assign(S.ayar, { baseUrl: ay.baseUrl }); S.program = pr; S.hazirlik = hz || {}; }
+      else if (b.kapsam === 'hepsi') { yedekAl('hepsini-sifirla'); const ay = S.ayar, pr = S.program; const hz = S.hazirlik; S = bosDurum(S.sablon); S.ayar = Object.assign(S.ayar, { baseUrl: ay.baseUrl }); S.program = pr; S.hazirlik = hz || {}; }
       else return hata(res, 400, 'Kapsam geçersiz.');
       commit(); return json(res, { ok: true });
     }
@@ -1460,22 +1534,64 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   try {
     if (url.pathname === '/favicon.ico') { res.writeHead(204); return res.end(); }
-    if (url.pathname.startsWith('/api/')) { if (!pinSiniri(req)) return hata(res, 429, 'Çok fazla hatalı PIN denemesi. 10 dakika sonra tekrar deneyin.'); return await api(req, res, url); }
+    if (url.pathname.startsWith('/api/')) {
+      if (!pinSiniri(req)) return hata(res, 429, 'Çok fazla hatalı PIN denemesi. 10 dakika sonra tekrar deneyin.');
+      if (req.method === 'GET' || req.method === 'HEAD') { // okuma: veritabanındaki güncel hâl üzerinden
+        if (url.pathname !== '/api/saat') await tazeTut();
+        degisti = false; okumada = true;
+        try { api(req, res, url); } catch (e) { e.istekHatasi = true; throw e; } finally { okumada = false; }
+        if (bekleyenCihazlar.length) cihazlariKaydet();
+        if (degisti) { degisti = false; islem(() => {}).catch(e => console.error('Kayıt hatası:', e.message)); } // okuma sırasında başka bir değişiklik olduysa kaydedilir
+        return;
+      }
+      try { req.govde = await govdeOku(req); } catch (e) { e.istekHatasi = true; throw e; }
+      const y = ertelenmisYanit();
+      await islem(() => api(req, y, url)); // yanıt, işlem başarıyla kaydedildikten sonra gönderilir
+      return y.gonder(res);
+    }
     if (url.pathname.startsWith('/static/')) return dosya(res, url.pathname.slice(8));
     for (const [re, f] of SAYFALAR) if (re.test(url.pathname)) return dosya(res, f);
     hata(res, 404, 'bulunamadı');
-  } catch (e) { console.error(e); try { hata(res, 400, 'İstek hatalı: ' + e.message); } catch (e2) { /* yut */ } }
+  } catch (e) {
+    console.error(e);
+    if (res.headersSent) return;
+    try { if (e.istekHatasi) hata(res, 400, 'İstek hatalı: ' + e.message); else hata(res, 503, 'Kayıt şu an yapılamadı. Birkaç saniye sonra tekrar deneyin.'); } catch (e2) { /* yut */ }
+  }
 });
+function ertelenmisYanit() { // yazma isteğinin yanıtı bellekte tutulur, kayıt başarılı olunca gönderilir
+  const y = { kod: 200, basliklar: {}, parcalar: [],
+    writeHead(kod, b) { y.kod = kod; Object.assign(y.basliklar, b || {}); return y; },
+    setHeader(a, d) { y.basliklar[a] = d; }, write(d) { y.parcalar.push(d); return true; }, end(d) { if (d != null) y.parcalar.push(d); },
+    gonder(res) { res.writeHead(y.kod, y.basliklar); res.end(Buffer.concat(y.parcalar.map(x => Buffer.isBuffer(x) ? x : Buffer.from(String(x))))); } };
+  return y;
+}
 
-yukle();
-moderatorTemizle();
-puanZamanla();
-for (const id of Object.keys(S.secim)) secimZamanla(id);
-process.on('SIGINT', () => { persist(true); process.exit(0); });
-process.on('SIGTERM', () => { persist(true); process.exit(0); });
-server.listen(PORT, '0.0.0.0', () => {
+let kapaniyor = false;
+async function kapan() { // yarım kalan yazma işlemleri bitirilir, sonra bağlantılar kapatılır
+  if (kapaniyor) return; kapaniyor = true;
+  server.close(); for (const r of clients) { try { r.end(); } catch (e) { /* yut */ } }
+  await Promise.race([kuyruk, new Promise(r => setTimeout(r, 5000))]);
+  await db.kapat(); process.exit(0);
+}
+async function basla() {
+  if (!DATABASE_URL) { console.error('HATA: DATABASE_URL tanımlı değil. Örnek: DATABASE_URL=postgres://kok:sifre@localhost:5432/kok node server.js'); process.exit(1); }
+  await db.baglan(DATABASE_URL); await db.semaKur();
+  let d = await db.durumOku();
+  if (!d) { // ilk açılış: eski sürümün dosyası varsa aktarılır, yoksa boş çalıştay
+    const eski = eskiDosyadanOku();
+    const yazildi = await db.ilkKayit(eski ? eski.S : bosDurum(), eski ? { neden: 'json-aktarim', veri: JSON.stringify(eski.ham) } : null);
+    if (yazildi && eski) console.log('Eski durum dosyası veritabanına aktarıldı: ' + eski.dosya);
+    d = await db.durumOku();
+  }
+  durumuAl(d);
+  await db.dinle(DATABASE_URL, v => { if (v === null || v !== S.v) tazeTut().catch(e => console.error('Durum yenilenemedi:', e.message)); }); // diğer kopyaların değişiklikleri
+  await islem(() => moderatorTemizle());
+  process.on('SIGINT', kapan); process.on('SIGTERM', kapan);
+  server.listen(PORT, '0.0.0.0', () => {
   console.log('\nKÖK Oylama Sistemi çalışıyor.');
   console.log('  Bu bilgisayar : http://localhost:' + PORT);
   for (const ip of lanIps()) console.log('  Ağdaki cihazlar: http://' + ip + ':' + PORT);
   console.log('  Yönetim PIN   : ' + (process.env.ADMIN_PIN ? '(ADMIN_PIN ortam değişkeni)' : ADMIN_PIN + '  (değiştirmek için ADMIN_PIN=... node server.js)') + '\n');
-});
+  });
+}
+basla().catch(e => { console.error('Sunucu başlatılamadı:', e.message); process.exit(1); });

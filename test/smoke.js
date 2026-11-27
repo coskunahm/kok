@@ -1,13 +1,18 @@
 // Uçtan uca duman testi: sunucuyu geçici veriyle başlatır, bir çalıştay akışını simüle eder.
 const { spawn } = require('child_process');
 const path = require('path'); const os = require('os'); const fs = require('fs');
-const PORT = 3999, PIN = 'test', DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'kok-'));
-const srv = spawn('node', [path.join(__dirname, '..', 'server.js')], { env: Object.assign({}, process.env, { PORT, ADMIN_PIN: PIN, DATA_DIR: DATA }), stdio: 'ignore' });
+const { Client } = require('pg');
+const { geciciVeritabani } = require('./pg-yardimci');
+const PORT = 3999, PIN = 'test', DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'kok-')); // boş klasör: eski dosya aktarımı olmaz
+const sunucu = (port, dbUrl, dataDir) => spawn('node', [path.join(__dirname, '..', 'server.js')], { env: Object.assign({}, process.env, { PORT: port, ADMIN_PIN: PIN, DATABASE_URL: dbUrl, DATA_DIR: dataDir || DATA }), stdio: 'ignore' });
+const hazir = async port => { for (let i = 0; i < 100; i++) { try { if ((await fetch('http://localhost:' + port + '/api/saat')).ok) return true; } catch (e) { /* bekle */ } await new Promise(r => setTimeout(r, 100)); } return false; };
+let srv = null, VT = null; const cocuklar = [];
 const B = 'http://localhost:' + PORT; let ok = 0, fail = 0;
-const t = (ad, c) => { if (c) { ok++; console.log('  ✓', ad); } else { fail++; console.log('  ✗', ad); } };
+const t = (ad, c, ek) => { if (c) { ok++; console.log('  ✓', ad); } else { fail++; console.log('  ✗', ad, ek === undefined ? '' : ek); } };
 async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, { method: m || (body ? 'POST' : 'GET'), headers: Object.assign({ 'content-type': 'application/json' }, pin ? { 'x-pin': PIN } : {}, extra || {}), body: body ? JSON.stringify(body) : undefined }); let j = {}; try { j = await r.json(); } catch (e) {} return { s: r.status, j }; }
 (async () => {
-  await new Promise(r => setTimeout(r, 700));
+  VT = await geciciVeritabani(); srv = sunucu(PORT, VT.url);
+  if (!(await hazir(PORT))) throw new Error('sunucu açılmadı');
   console.log('Kurulum ve atama');
   await a('/api/admin/simule', { tur: 'katilimci' });
   let v = (await a('/api/admin/view')).j;
@@ -377,10 +382,11 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
     t('ana adres yalnızca katılım ekranıdır (menü ayrı)', /Katıl · KÖK/.test(await (await fetch(B + '/')).text()) && /Oylama Sistemi/.test(await (await fetch(B + '/menu')).text())); }
   { await a('/api/admin/ayar', { kendiMasaPuan: false }); const vk = (await a('/api/admin/view')).j, ak = vk.sunum.fikir; if (ak) { const beklenen = vk.katilimcilar.filter(k => k.masa !== ak.masa).length; t('puan sayacının paydası kendi masa hariç puanlayabilecek kişi sayısıdır', vk.sunum.katilimci === beklenen, vk.sunum.katilimci + ' / ' + beklenen); } }
   console.log('Nihai kalite düzeltmeleri');
-  { // ---- F01: kesintisiz trafikte de diske en geç ~1 sn içinde yazılır
-    await new Promise(r => setTimeout(r, 700)); const mt0 = fs.statSync(path.join(DATA, 'state.json')).mtimeMs;
-    for (let i = 0; i < 16; i++) { await a('/api/admin/hazirlik', { id: 'kesintisiz' + (i % 2), ok: i % 4 < 2 }); await new Promise(r => setTimeout(r, 110)); }
-    t('kesintisiz işlemde bile durum dosyası en geç ~1 sn içinde yazılır', fs.statSync(path.join(DATA, 'state.json')).mtimeMs > mt0);
+  { // ---- F01: her yazma, yanıt dönmeden önce PostgreSQL'e işlenir
+    { const pc = new Client({ connectionString: VT.url }); await pc.connect(); const v0 = Number((await pc.query('SELECT v FROM calistay')).rows[0].v);
+      r = await a('/api/admin/hazirlik', { id: 'kalici', ok: true });
+      const q = await pc.query("SELECT 1 FROM hazirlik WHERE madde = 'kalici'"); const v1 = Number((await pc.query('SELECT v FROM calistay')).rows[0].v); await pc.end();
+      t('yazma isteği yanıt dönmeden önce veritabanına işlenir ve sürüm artar', r.s === 200 && q.rows.length === 1 && v1 === v0 + 1, JSON.stringify([r.s, r.j, q.rows.length, v0, v1])); }
     // ---- F09, F12: oy ve fikir doğrulamaları (4B fikir, 6B oy)
     await a('/api/admin/simule', { tur: 'bulgu-demo', turKodu: 'GZ', seviye: 'tam', masa: '4B' }); await a('/api/admin/simule', { tur: 'bulgu-demo', turKodu: 'GZ', seviye: 'tam', masa: '4A' });
     await a('/api/admin/simule', { tur: 'fikir-demo', masa: '4B', adim: 'giris' }); await a('/api/admin/toplu-secim', { islem: 'tablo-ac' });
@@ -411,14 +417,43 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
     const u5 = (await a('/api/masa/5A/view?k=' + key5, null, false)).j.detay.find(f => f.id === '5A-2').alan.uygulama || ''; t('sınırda kesilen metin geçerli Unicode kalır (emoji yarım kalmaz)', !/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(u5) && Array.from(u5).length === 200, JSON.stringify([u5.length, Array.from(u5).length]));
     await a('/api/kayit/ekle', { etiket: '=HYPERLINK("http://x")', masa: '1A' }, false, 'POST', { 'x-kayit-pin': 'kayit2026' }); const csvK = await (await fetch(B + '/api/admin/export/katilimcilar.csv', { headers: { 'x-pin': PIN } })).text();
     t('CSV\'de formül başlangıçlı metin etkisizleştirilir', csvK.includes("'=HYPERLINK") && !/(^|;|\n)=HYPERLINK/.test(csvK)); }
-  { // ---- F02: bozuk durum dosyası sessizce boş çalıştaya dönmez
+  { // ---- F02: eski sürümün durum dosyasından geçiş (yalnızca veritabanı boşken)
+    const db = require('../db'); await db.baglan(VT.url); const mevcut = (await db.durumOku()).S; await db.kapat();
+    const vt2 = await geciciVeritabani();
     const bozuk = fs.mkdtempSync(path.join(os.tmpdir(), 'kok-bozuk-')); fs.writeFileSync(path.join(bozuk, 'state.json'), '{bozuk json');
-    const cikis = await new Promise(res => { const c = spawn('node', [path.join(__dirname, '..', 'server.js')], { env: Object.assign({}, process.env, { PORT: 3997, ADMIN_PIN: PIN, DATA_DIR: bozuk }), stdio: 'ignore' }); const z = setTimeout(() => { c.kill(); res('çalışıyor'); }, 2500); c.on('exit', code => { clearTimeout(z); res('durdu:' + code); }); });
-    t('bozuk durum dosyası ve yedek yoksa sunucu boş çalıştayla açılmaz', cikis === 'durdu:1', cikis);
-    fs.copyFileSync(path.join(DATA, 'state.json'), path.join(bozuk, 'state.json.onceki'));
-    const srv2 = spawn('node', [path.join(__dirname, '..', 'server.js')], { env: Object.assign({}, process.env, { PORT: 3997, ADMIN_PIN: PIN, DATA_DIR: bozuk }), stdio: 'ignore' }); await new Promise(r => setTimeout(r, 1200));
+    const cikis = await new Promise(res => { const c = sunucu(3997, vt2.url, bozuk); const z = setTimeout(() => { c.kill(); res('çalışıyor'); }, 4000); c.on('exit', code => { clearTimeout(z); res('durdu:' + code); }); });
+    t('bozuk eski dosya ve yedek yoksa sunucu boş çalıştayla açılmaz', cikis === 'durdu:1', cikis);
+    fs.writeFileSync(path.join(bozuk, 'state.json.onceki'), JSON.stringify(mevcut));
+    const srv2 = sunucu(3997, vt2.url, bozuk); cocuklar.push(srv2); await hazir(3997);
     let sayi = -1; try { const j = await (await fetch('http://localhost:3997/api/admin/view', { headers: { 'x-pin': PIN } })).json(); sayi = j.katilimcilar.length; } catch (e) { /* yut */ }
-    srv2.kill(); t('bozuk ana dosya varken sağlam yedekten devam eder ve bozuk dosyayı saklar', sayi > 100 && fs.readdirSync(bozuk).some(f => f.startsWith('state.json.bozuk-')), String(sayi)); }
+    srv2.kill(); await new Promise(r => setTimeout(r, 300));
+    const pc = new Client({ connectionString: vt2.url }); await pc.connect(); const yd = (await pc.query("SELECT count(*)::int AS n FROM yedekler WHERE neden = 'json-aktarim'")).rows[0].n; await pc.end(); await vt2.sil();
+    t('bozuk ana dosya varken sağlam yedek veritabanına aktarılır ve aktarılan veri yedeklenir', sayi === Object.keys(mevcut.katilimcilar).length && yd === 1, String([sayi, yd])); }
+  { // ---- aynı veritabanında iki sunucu kopyası
+    const srv3 = sunucu(3996, VT.url); cocuklar.push(srv3); await hazir(3996);
+    const a3 = async (p, body) => { const r = await fetch('http://localhost:3996' + p, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', 'x-pin': PIN }, body: body ? JSON.stringify(body) : undefined }); return { s: r.status, j: await r.json().catch(() => ({})) }; };
+    t('ikinci kopya aynı veriyle açılır', (await a3('/api/admin/view')).j.katilimcilar.length === (await a('/api/admin/view')).j.katilimcilar.length);
+    const ctrl = new AbortController(); let olay = ''; const sse = fetch('http://localhost:3996/api/events', { signal: ctrl.signal }).then(async rr => { const rd = rr.body.getReader(); for (;;) { const { value, done } = await rd.read(); if (done) break; olay += new TextDecoder().decode(value); } }).catch(() => {});
+    await new Promise(r => setTimeout(r, 300)); const oncekiOlay = olay.length;
+    await a('/api/admin/hazirlik', { id: 'kopya1', ok: true });
+    t('bir kopyada yazılan diğer kopyada hemen okunur', !!(await a3('/api/admin/view')).j.hazirlik.kopya1);
+    await new Promise(r => setTimeout(r, 600)); ctrl.abort(); await sse;
+    t('diğer kopyanın canlı bağlantılarına değişiklik bildirilir', /event: v/.test(olay.slice(oncekiOlay)), JSON.stringify(olay.slice(oncekiOlay)));
+    await a3('/api/admin/hazirlik', { id: 'kopya2', ok: true });
+    t('ikinci kopyada yazılan birinci kopyada okunur', !!(await a('/api/admin/view')).j.hazirlik.kopya2);
+    const once = (await a('/api/admin/view')).j.katilimcilar.length;
+    await Promise.all([a('/api/kayit/ekle', { etiket: 'Eşzamanlı A', masa: '1A' }, false, 'POST', { 'x-kayit-pin': 'kayit2026' }), a3('/api/admin/hazirlik', { id: 'kopya3', ok: true }), a('/api/kayit/ekle', { etiket: 'Eşzamanlı B', masa: '1B' }, false, 'POST', { 'x-kayit-pin': 'kayit2026' })]);
+    const son = (await a3('/api/admin/view')).j;
+    t('iki kopyaya aynı anda gelen yazmalar kaybolmaz', son.katilimcilar.length === once + 2 && !!son.hazirlik.kopya3, String([once, son.katilimcilar.length]));
+    srv3.kill(); }
+  { // ---- veritabanı giderse istekler takılmaz, 503 döner
+    const vt4 = await geciciVeritabani(); const srv4 = sunucu(3995, vt4.url); cocuklar.push(srv4); await hazir(3995);
+    await vt4.sil(); const t0 = Date.now();
+    const g = await fetch('http://localhost:3995/api/admin/view', { headers: { 'x-pin': PIN } }).then(x => x.status, () => 0);
+    const p = await fetch('http://localhost:3995/api/admin/hazirlik', { method: 'POST', headers: { 'content-type': 'application/json', 'x-pin': PIN }, body: JSON.stringify({ id: 'yok', ok: true }) }).then(x => x.status, () => 0);
+    t('veritabanı yokken okuma ve yazma takılmadan 503 döner', g === 503 && p === 503 && Date.now() - t0 < 25000, JSON.stringify([g, p, Date.now() - t0]));
+    t('veritabanı hatasından sonra sunucu ayakta kalır', (await fetch('http://localhost:3995/api/saat').then(x => x.status, () => 0)) === 200);
+    srv4.kill(); }
   console.log('SWOT eşitliği: dar oylama ve kura');
   { await a('/api/admin/simule', { tur: 'katilimci' }); const vd = (await a('/api/admin/view')).j, p1b = vd.katilimcilar.filter(k => k.masa === '3B' && !k.kolay);
     await a('/api/admin/masa/3B', { tur: 'G', islem: 'ayarla', postit: 6, oy: 2, maxPer: 2, ilkK: 1 }); await a('/api/admin/masa/3B', { tur: 'G', islem: 'ac' });
@@ -450,5 +485,6 @@ async function a(p, body, pin = true, m, extra) { const r = await fetch(B + p, {
     const yd = vy.katilimcilar.find(k => k.yedek); r = await a('/api/kayit/katilimci/' + yd.id, { etiket: 'Kişiye Atanan', pozisyon: 'Direktör', masa: '3B', geldi: true }, false, 'POST', KP); vy = (await a('/api/admin/view')).j; const at = vy.katilimcilar.find(k => k.id === yd.id);
     t('yedek ID kayıt masasında kişiye atanır', r.s === 200 && at.etiket === 'Kişiye Atanan' && at.masa === '3B' && !at.yedek && at.geldi === true); }
   console.log('\n' + ok + ' geçti, ' + fail + ' kaldı');
-  srv.kill(); process.exit(fail ? 1 : 0);
-})().catch(e => { console.error(e); srv.kill(); process.exit(1); });
+  await kapat(); process.exit(fail ? 1 : 0);
+})().catch(async e => { console.error(e); await kapat(); process.exit(1); });
+async function kapat() { for (const c of cocuklar.concat(srv ? [srv] : [])) { try { c.kill(); } catch (e) { /* yut */ } } await new Promise(r => setTimeout(r, 300)); if (VT) await VT.sil().catch(() => {}); }

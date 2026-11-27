@@ -6,7 +6,8 @@
  *   node tools/test_ortami.js --port=3300 --asama=sonuc
  *
  * Aşamalar: bos | swot-acik | swot-bitti | fikir | detay | genel-kurul | sonuc
- * Kapatmak için Ctrl+C. Veri geçici klasörde tutulur ve kapanışta silinir.
+ * Kapatmak için Ctrl+C. Veri geçici bir PostgreSQL veritabanında tutulur ve kapanışta silinir
+ * (yönetici bağlantısı: TEST_DATABASE_URL, varsayılan postgres://localhost:5432/postgres).
  */
 const { spawn } = require('child_process'); const fs = require('fs'); const os = require('os'); const path = require('path');
 const arg = (ad, v) => { const a = process.argv.find(x => x.startsWith('--' + ad + '=')); return a ? a.split('=')[1] : v; };
@@ -14,14 +15,23 @@ const PORT = +arg('port', 3200), ASAMA = arg('asama', 'bos'), PIN = 'test-pin-20
 const ASAMALAR = ['bos', 'swot-acik', 'swot-bitti', 'fikir', 'detay', 'genel-kurul', 'sonuc'];
 if (!ASAMALAR.includes(ASAMA)) { console.error('Geçersiz --asama. Seçenekler: ' + ASAMALAR.join(', ')); process.exit(1); }
 if ([3000, 3001].includes(PORT)) { console.error('3000 ve 3001 portları gerçek/deneme sunucularına ayrılmıştır. Başka bir port seçin.'); process.exit(1); }
-const ROOT = path.join(__dirname, '..'), DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'kok-test-ortami-'));
+const { geciciVeritabani } = require('../test/pg-yardimci');
+const ROOT = path.join(__dirname, '..'), DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'kok-test-ortami-')); // boş: eski dosya aktarımı olmaz
 const B = 'http://localhost:' + PORT, sleep = ms => new Promise(r => setTimeout(r, ms));
-const srv = spawn('node', [path.join(ROOT, 'server.js')], { env: Object.assign({}, process.env, { PORT: String(PORT), ADMIN_PIN: PIN, KAYIT_PIN: KAYIT, DATA_DIR: DATA }), stdio: 'ignore' });
-const kapat = () => { try { srv.kill(); } catch (e) { /* yut */ } try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* yut */ } process.exit(0); };
-process.on('SIGINT', kapat); process.on('SIGTERM', kapat); srv.on('exit', () => { try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* yut */ } process.exit(0); });
+let srv = null, VT = null, kapaniyor = false;
+const kapat = async () => {
+  if (kapaniyor) return; kapaniyor = true;
+  try { if (srv) srv.kill(); } catch (e) { /* yut */ } await sleep(300);
+  try { fs.rmSync(DATA, { recursive: true, force: true }); } catch (e) { /* yut */ }
+  if (VT) await VT.sil().catch(() => {}); process.exit(0);
+};
+process.on('SIGINT', kapat); process.on('SIGTERM', kapat);
 const api = async (p, b, h) => { const r = await fetch(B + p, { method: b ? 'POST' : 'GET', headers: h || { 'content-type': 'application/json', 'x-pin': PIN }, body: b ? JSON.stringify(b) : undefined }); let j = {}; try { j = await r.json(); } catch (e) { /* boş */ } return j; };
 const adm = (p, b) => api('/api/admin' + p, b);
 (async () => {
+  VT = await geciciVeritabani();
+  srv = spawn('node', [path.join(ROOT, 'server.js')], { env: Object.assign({}, process.env, { PORT: String(PORT), ADMIN_PIN: PIN, KAYIT_PIN: KAYIT, DATA_DIR: DATA, DATABASE_URL: VT.url }), stdio: 'ignore' });
+  srv.on('exit', kapat);
   for (let i = 0; i < 40; i++) { try { if ((await fetch(B + '/api/saat')).ok) break; } catch (e) { /* bekle */ } await sleep(250); }
   await adm('/ayar', { baseUrl: B });
   await adm('/simule', { tur: 'katilimci' }); await adm('/kolaylastirici/eksik-olustur', {});
