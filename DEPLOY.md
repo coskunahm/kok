@@ -106,7 +106,7 @@ WantedBy=multi-user.target
 | `ADMIN_PIN` | Yönetim paneli PIN'i | `kok2026` (canlıda değiştirin) |
 | `KAYIT_PIN` | Kayıt masası PIN'i | `kayit2026` (değiştirin) |
 | `BASE_URL` | QR ve bağlantılarda kullanılan adres | boş (otomatik) |
-| `TRUST_PROXY` | `1` ise gerçek istemci IP'si `X-Forwarded-For`'dan alınır (ters vekil arkasında şart) | kapalı |
+| `TRUST_PROXY` | `1` ise gerçek istemci IP'si `X-Forwarded-For`'dan alınır (ters vekil arkasında şart). Site Cloudflare proxy'si arkasındaysa `cloudflare` yazın: IP, istemcinin sahteleyemediği `CF-Connecting-IP` başlığından alınır (sunucu yalnızca Cloudflare IP'lerine açık olmalı) | kapalı |
 | `PORT` | Dinlenen port | 3000 |
 | `DATA_DIR` | Verinin yazıldığı klasör | `./data` |
 

@@ -14,7 +14,8 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const SURUM = String(Date.now()); // sunucu her başladığında değişir; açık sayfalar kod değiştiyse kendini yeniler
 const ADMIN_PIN = process.env.ADMIN_PIN || 'kok2026';
 const KAYIT_PIN = process.env.KAYIT_PIN || 'kayit2026'; // kayıt masası PIN'i (yalnızca kayıt ekranı)
-const TRUST_PROXY = /^(1|true|evet)$/i.test(process.env.TRUST_PROXY || ''); // ters vekil (Caddy/Nginx) arkasındaysa gerçek istemci IP'si X-Forwarded-For'dan alınır
+const CLOUDFLARE = /^cloudflare$/i.test(process.env.TRUST_PROXY || ''); // Cloudflare proxy arkasındaysa gerçek istemci IP'si CF-Connecting-IP'den alınır (istemci bunu sahteleyemez)
+const TRUST_PROXY = CLOUDFLARE || /^(1|true|evet)$/i.test(process.env.TRUST_PROXY || ''); // ters vekil (Caddy/Nginx) arkasındaysa gerçek istemci IP'si X-Forwarded-For'dan alınır
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const FILE = path.join(DATA_DIR, 'state.json');
 const PUB = path.join(__dirname, 'public');
@@ -241,7 +242,7 @@ function cihazKontrol(k, req) {
 }
 /* kimlik denemelerinde kaba kuvvet sınırı: IP başına 10 dakikada en fazla 20 hatalı deneme */
 const denemeler = {};
-function istemciIp(req) { if (TRUST_PROXY) { const x = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim(); if (x) return x.slice(0, 64); } return req.socket.remoteAddress || '?'; }
+function istemciIp(req) { if (CLOUDFLARE) { const c = String(req.headers['cf-connecting-ip'] || '').trim(); if (c) return c.slice(0, 64); } if (TRUST_PROXY) { const x = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim(); if (x) return x.slice(0, 64); } return req.socket.remoteAddress || '?'; }
 const pinDeneme = {}; /* yönetim/kayıt PIN'i: IP başına 10 dakikada en çok 15 hatalı deneme */
 function pinSiniri(req) {
   const hp = req.headers['x-pin'] !== undefined && req.headers['x-pin'] !== ADMIN_PIN, hk = req.headers['x-kayit-pin'] !== undefined && req.headers['x-kayit-pin'] !== KAYIT_PIN && req.headers['x-pin'] !== ADMIN_PIN;
